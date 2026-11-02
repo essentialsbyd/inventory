@@ -6,26 +6,15 @@
     <title>Master Cutter Entry - Essentials By D</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- html5-qrcode scanner library -->
-    <script src="https://unpkg.com/html5-qrcode"></script>
-    <style>
-        #reader video { 
-            object-fit: cover; 
-            border-radius: 1rem; 
-            width: 100% !important;
-        }
-        #reader { border: none !important; background: transparent !important; }
-        #reader__dashboard_section_csr, #reader__dashboard_section_swaplink, #reader select {
-            display: none !important;
-        }
-    </style>
+    <!-- ZXing Barcode Scanner Library (Laptop & Mobile Compatible) -->
+    <script type="text/javascript" src="https://unpkg.com/@zxing/library@0.19.1"></script>
 </head>
 <body class="bg-slate-950 text-white min-h-screen flex flex-col justify-between items-center p-4 font-sans select-none">
 
     <!-- App Header -->
     <header class="w-full text-center py-4 border-b border-slate-800">
         <h1 class="text-xl font-black tracking-widest text-amber-400">ESSENTIALS BY D</h1>
-        <p class="text-xs text-slate-400 font-medium mt-0.5">Master Cutter Quick Entry Panel</p>
+        <p class="text-xs text-slate-400 font-medium mt-0.5">Master Cutter Quick Entry Panel (Laptop & Mobile)</p>
     </header>
 
     <!-- Main Container -->
@@ -38,36 +27,37 @@
             </div>
             <div>
                 <h2 class="text-lg font-bold text-white">Fabric Scanning Ready</h2>
-                <p class="text-xs text-slate-400 mt-1">Barcode scan karne ke liye neechay button dabayein</p>
+                <p class="text-xs text-slate-400 mt-1">Camera on karne ke liye button dabayein</p>
             </div>
-            <button onclick="openCamera()" class="w-full bg-amber-500 hover:bg-amber-600 active:scale-95 text-slate-950 font-black py-4 rounded-2xl shadow-xl transition text-base tracking-wide flex items-center justify-center gap-2">
+            <button onclick="startScanning()" class="w-full bg-amber-500 hover:bg-amber-600 active:scale-95 text-slate-950 font-black py-4 rounded-2xl shadow-xl transition text-base tracking-wide flex items-center justify-center gap-2">
                 <span>⚡</span> <span>OPEN CAMERA & SCAN</span>
             </button>
         </div>
 
-        <!-- SCANNER BOX (Hidden initially, opens on button click) -->
+        <!-- SCANNER BOX (Hidden initially) -->
         <div id="scanner-container" class="w-full bg-slate-900/90 p-4 rounded-3xl border border-slate-800 shadow-2xl backdrop-blur-md hidden">
             <div class="flex items-center justify-between mb-3 px-1">
                 <span class="text-xs font-semibold text-amber-400 uppercase tracking-wider">📷 Scanner Active</span>
-                <button onclick="closeCamera()" class="text-[11px] bg-rose-500/10 text-rose-400 px-2.5 py-1 rounded-full font-bold border border-rose-500/20">
+                <button onclick="stopScanning()" class="text-[11px] bg-rose-500/10 text-rose-400 px-2.5 py-1 rounded-full font-bold border border-rose-500/20">
                     ✕ Stop Camera
                 </button>
             </div>
             
-            <!-- Camera Render Box -->
-            <div id="reader" class="w-full overflow-hidden rounded-2xl bg-black border border-slate-800 min-h-[260px]"></div>
+            <!-- Video Preview Box -->
+            <div class="w-full overflow-hidden rounded-2xl bg-black border border-slate-800 relative min-h-[260px] flex items-center justify-center">
+                <video id="video" class="w-full h-full object-cover rounded-2xl"></video>
+            </div>
             
-            <!-- Switch Camera Button -->
-            <button onclick="switchCamera()" class="w-full mt-3 bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-200 font-bold py-2.5 rounded-xl text-xs transition flex items-center justify-center gap-2 border border-slate-700">
-                <span>🔄</span> <span>Switch Front / Back Camera</span>
-            </button>
+            <p class="text-[11px] text-slate-400 text-center mt-3 font-medium">
+                Barcode ko camera ke samne rakhein
+            </p>
         </div>
 
     </main>
 
     <!-- Quick Footer -->
     <footer class="w-full text-center py-2 text-[10px] text-slate-600">
-        Mobile Scanner Mode • Button Controlled
+        Universal Scanner Mode • Laptop & Mobile Ready
     </footer>
 
     <!-- POPUP MODAL (CUT ONLY) -->
@@ -116,47 +106,73 @@
 
     <!-- Logic Script -->
     <script>
-        let html5QrCode = null;
-        let currentFacingMode = "environment"; 
+        let codeReader;
         let lastScannedCode = "";
+        let isScanningActive = false;
 
-        function openCamera() {
+        async function startScanning() {
             document.getElementById('start-screen').classList.add('hidden');
             document.getElementById('scanner-container').classList.remove('hidden');
-            startScanner();
-        }
 
-        function closeCamera() {
-            if (html5QrCode && html5QrCode.isScanning) {
-                html5QrCode.stop().then(() => {
-                    html5QrCode.clear();
-                }).catch(err => console.log(err));
+            if (!codeReader) {
+                codeReader = new ZXing.BrowserBarcodeReader();
             }
-            document.getElementById('scanner-container').classList.add('hidden');
-            document.getElementById('start-screen').classList.remove('hidden');
+
+            try {
+                isScanningActive = true;
+                const videoInputDevices = await codeReader.listVideoInputDevices();
+                
+                if (videoInputDevices.length === 0) {
+                    alert("Koi camera nahi mila!");
+                    stopScanning();
+                    return;
+                }
+
+                // Automatically pick the right camera (Back camera for phones, Webcam for laptops)
+                let selectedDeviceId = videoInputDevices[0].deviceId;
+                for (const device of videoInputDevices) {
+                    const name = device.label.toLowerCase();
+                    if (name.includes('back') || name.includes('rear') || name.includes('environment')) {
+                        selectedDeviceId = device.deviceId;
+                        break;
+                    }
+                }
+
+                codeReader.decodeFromVideoDevice(selectedDeviceId, 'video', (result, err) => {
+                    if (result && isScanningActive) {
+                        lastScannedCode = result.getText();
+                        if (lastScannedCode) {
+                            triggerPopup(lastScannedCode);
+                        }
+                    }
+                });
+            } catch (err) {
+                console.error("Camera error:", err);
+                alert("Camera ki permission deni lazmi hai!");
+                stopScanning();
+            }
         }
 
-        function onScanSuccess(decodedText, decodedResult) {
-            if (!decodedText || decodedText.trim() === "") return;
-            
-            lastScannedCode = decodedText;
-            
-            document.getElementById('popup-barcode').innerText = "CODE: " + decodedText;
-            document.getElementById('popup-title').innerText = "Fabric Code #" + decodedText;
+        function triggerPopup(code) {
+            isScanningActive = false;
+            document.getElementById('popup-barcode').innerText = "CODE: " + code;
+            document.getElementById('popup-title').innerText = "Fabric Code #" + code;
             document.getElementById('meters-input').value = '';
-            
             document.getElementById('cut-popup').classList.remove('hidden');
-
-            if(html5QrCode && html5QrCode.isScanning) {
-                html5QrCode.pause();
-            }
         }
 
         function closePopup() {
             document.getElementById('cut-popup').classList.add('hidden');
-            if(html5QrCode) {
-                html5QrCode.resume();
+            isScanningActive = true; 
+        }
+
+        function stopScanning() {
+            if (codeReader) {
+                codeReader.reset();
             }
+            isScanningActive = false;
+            document.getElementById('scanner-container').classList.add('hidden');
+            document.getElementById('start-screen').classList.remove('hidden');
         }
 
         function submitCut() {
@@ -168,33 +184,6 @@
 
             alert(`✂️ Cut Recorded Successfully!\n\nFabric Code: ${lastScannedCode}\nDeducted Meters: ${meters}m`);
             closePopup();
-        }
-
-        function startScanner() {
-            if (!html5QrCode) {
-                html5QrCode = new Html5Qrcode("reader");
-            }
-            const config = { fps: 15, qrbox: { width: 200, height: 200 } };
-            
-            html5QrCode.start(
-                { facingMode: currentFacingMode }, 
-                config, 
-                onScanSuccess
-            ).catch(err => {
-                console.error("Camera start error", err);
-                html5QrCode.start({ facingMode: "user" }, config, onScanSuccess);
-            });
-        }
-
-        function switchCamera() {
-            if (!html5QrCode) return;
-            
-            html5QrCode.stop().then(() => {
-                currentFacingMode = (currentFacingMode === "environment") ? "user" : "environment";
-                startScanner();
-            }).catch(err => {
-                console.error("Failed to clear scanner. ", err);
-            });
         }
     </script>
 </body>
