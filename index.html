@@ -15,7 +15,6 @@
             width: 100% !important;
         }
         #reader { border: none !important; background: transparent !important; }
-        /* Hide extra default dropdowns */
         #reader__dashboard_section_csr, #reader__dashboard_section_swaplink, #reader select {
             display: none !important;
         }
@@ -53,7 +52,7 @@
 
     <!-- Quick Footer -->
     <footer class="w-full text-center py-2 text-[10px] text-slate-600">
-        Mobile Scanner Mode • Switch Button Enabled
+        Mobile Scanner Mode • Fixed Auto-Popup Bug
     </footer>
 
     <!-- POPUP MODAL -->
@@ -106,10 +105,13 @@
     <!-- Logic Script -->
     <script>
         let html5QrCode;
-        let currentFacingMode = "environment"; // Default to back camera
+        let currentFacingMode = "environment"; 
         let lastScannedCode = "";
 
         function onScanSuccess(decodedText, decodedResult) {
+            // Safety check: ignore empty or invalid triggers on load
+            if (!decodedText || decodedText.trim() === "") return;
+            
             lastScannedCode = decodedText;
             
             document.getElementById('popup-barcode').innerText = "CODE: " + decodedText;
@@ -141,7 +143,6 @@
             closePopup();
         }
 
-        // Start Scanner Function
         function startScanner() {
             html5QrCode = new Html5Qrcode("reader");
             const config = { fps: 15, qrbox: { width: 200, height: 200 } };
@@ -152,17 +153,14 @@
                 onScanSuccess
             ).catch(err => {
                 console.error("Camera start error", err);
-                // Fallback to user camera if environment fails
                 html5QrCode.start({ facingMode: "user" }, config, onScanSuccess);
             });
         }
 
-        // Switch Camera Functionality
         function switchCamera() {
             if (!html5QrCode) return;
             
             html5QrCode.stop().then(() => {
-                // Toggle between back ("environment") and front ("user")
                 currentFacingMode = (currentFacingMode === "environment") ? "user" : "environment";
                 startScanner();
             }).catch(err => {
@@ -170,8 +168,9 @@
             });
         }
 
-        // Initialize on load
+        // Initialize and ensure popup starts hidden
         window.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('cut-popup').classList.add('hidden');
             startScanner();
         });
     </script>
