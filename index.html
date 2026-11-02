@@ -3,128 +3,374 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Essentials By D - Master Inventory & Cutting</title>
+    <title>Essentials By D - Master Fabric Inventory</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- ZXing Barcode Scanner Library -->
     <script type="text/javascript" src="https://unpkg.com/@zxing/library@0.19.1"></script>
+    <style>
+        .custom-scrollbar::-webkit-scrollbar { height: 6px; width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #0f172a; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+    </style>
 </head>
-<body class="bg-slate-950 text-white min-h-screen flex flex-col justify-between font-sans select-none">
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col justify-between font-sans select-none antialiased">
 
     <!-- Top Navigation Header -->
-    <header class="w-full bg-slate-900 border-b border-slate-800 px-6 py-4 flex items-center justify-between">
-        <div>
-            <h1 class="text-lg font-black tracking-widest text-amber-400">ESSENTIALS BY D</h1>
-            <p class="text-[11px] text-slate-400 font-medium">Master Inventory & Cutting Management</p>
+    <header class="w-full bg-slate-900/90 border-b border-slate-800/80 px-4 md:px-8 py-3.5 sticky top-0 z-40 backdrop-blur-md flex items-center justify-between">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-amber-500/10 border border-amber-500/20 rounded-xl flex items-center justify-center text-amber-400 font-black text-lg">
+                D
+            </div>
+            <div>
+                <h1 class="text-base md:text-lg font-black tracking-wider text-amber-400 uppercase">Essentials By D</h1>
+                <p class="text-[10px] md:text-xs text-slate-400 font-medium">Master Cutter Inventory & Live Stock Deduction</p>
+            </div>
         </div>
+        
         <div class="flex items-center gap-2">
-            <!-- Scan Trigger Button on Header -->
-            <button onclick="openScannerModal()" class="bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold px-4 py-2 rounded-xl text-xs flex items-center gap-1.5 shadow-lg active:scale-95 transition">
-                <span>📷</span> <span>Scan Barcode</span>
+            <!-- Main Scan Trigger -->
+            <button onclick="openScannerModal()" class="bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 font-black px-4 py-2.5 rounded-xl text-xs flex items-center gap-2 shadow-lg shadow-amber-500/10 active:scale-95 transition">
+                <span class="text-base">📷</span> <span class="hidden sm:inline">SCAN FABRIC</span><span>BARCODE</span>
             </button>
         </div>
     </header>
 
-    <!-- Main Inventory Dashboard Container -->
-    <main class="w-full max-w-5xl mx-auto p-4 md:p-6 space-y-6 flex-grow">
+    <!-- Main Container -->
+    <main class="w-full max-w-7xl mx-auto p-4 md:p-6 space-y-6 flex-grow">
         
-        <!-- Stats Row -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div class="bg-slate-900/90 border border-slate-800 p-5 rounded-3xl shadow-xl flex items-center justify-between">
-                <div>
-                    <p class="text-xs text-slate-400 font-medium">Total Fabrics</p>
-                    <h3 class="text-2xl font-black text-white mt-1">3 Items</h3>
-                </div>
-                <div class="w-12 h-12 bg-amber-500/10 text-amber-400 rounded-2xl flex items-center justify-center text-xl border border-amber-500/20">
-                    📦
-                </div>
+        <!-- Summary Cards -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
+            <div class="bg-slate-900/70 border border-slate-800 p-4 rounded-2xl shadow-lg backdrop-blur-sm">
+                <p class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Total Items</p>
+                <h3 class="text-xl md:text-2xl font-black text-white mt-1" id="stat-total-items">0</h3>
             </div>
-            <div class="bg-slate-900/90 border border-slate-800 p-5 rounded-3xl shadow-xl flex items-center justify-between">
-                <div>
-                    <p class="text-xs text-slate-400 font-medium">Total Cuts Deducted</p>
-                    <h3 class="text-2xl font-black text-rose-400 mt-1" id="total-cuts-display">0.0 Meters</h3>
-                </div>
-                <div class="w-12 h-12 bg-rose-500/10 text-rose-400 rounded-2xl flex items-center justify-center text-xl border border-rose-500/20">
-                    ✂️
-                </div>
+            <div class="bg-slate-900/70 border border-slate-800 p-4 rounded-2xl shadow-lg backdrop-blur-sm">
+                <p class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Total Stock</p>
+                <h3 class="text-xl md:text-2xl font-black text-amber-400 mt-1" id="stat-total-stock">0.0m</h3>
             </div>
-            <div class="bg-slate-900/90 border border-slate-800 p-5 rounded-3xl shadow-xl flex items-center justify-between">
-                <div>
-                    <p class="text-xs text-slate-400 font-medium">System Status</p>
-                    <h3 class="text-sm font-bold text-emerald-400 mt-1">● Live Stock Active</h3>
-                </div>
-                <div class="w-12 h-12 bg-emerald-500/10 text-emerald-400 rounded-2xl flex items-center justify-center text-xl border border-emerald-500/20">
-                    ⚡
-                </div>
+            <div class="bg-slate-900/70 border border-slate-800 p-4 rounded-2xl shadow-lg backdrop-blur-sm">
+                <p class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Used / Cut Meters</p>
+                <h3 class="text-xl md:text-2xl font-black text-rose-400 mt-1" id="stat-used-meters">0.0m</h3>
+            </div>
+            <div class="bg-slate-900/70 border border-slate-800 p-4 rounded-2xl shadow-lg backdrop-blur-sm">
+                <p class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Available Balance</p>
+                <h3 class="text-xl md:text-2xl font-black text-emerald-400 mt-1" id="stat-remaining-stock">0.0m</h3>
             </div>
         </div>
 
-        <!-- Inventory Table Section -->
-        <div class="bg-slate-900/90 border border-slate-800 rounded-3xl shadow-xl overflow-hidden">
-            <div class="p-5 border-b border-slate-800 flex items-center justify-between">
-                <h2 class="text-sm font-bold text-white uppercase tracking-wider">Fabric Stock Records (Live Deduction)</h2>
-                <span class="text-xs text-slate-400">Click 'Cut Entry' or Scan Barcode</span>
+        <!-- Inventory Master Table Card -->
+        <div class="bg-slate-900/80 border border-slate-800/80 rounded-3xl shadow-2xl overflow-hidden backdrop-blur-md">
+            <div class="p-4 md:p-5 border-b border-slate-800/80 flex flex-col md:flex-row md:items-center justify-between gap-3">
+                <div>
+                    <h2 class="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
+                        <span>📊</span> Fabric Inventory Ledger
+                    </h2>
+                    <p class="text-xs text-slate-400 mt-0.5">Live stock balance, deductions, and barcode status</p>
+                </div>
+                
+                <!-- Search Input for PC / Mobile -->
+                <div class="relative w-full md:w-64">
+                    <input type="text" id="search-input" onkeyup="filterInventory()" placeholder="Search Code or Name..." class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2 text-xs text-white outline-none focus:border-amber-400/80 transition">
+                </div>
             </div>
-            <div class="overflow-x-auto">
+
+            <!-- Table -->
+            <div class="overflow-x-auto custom-scrollbar">
                 <table class="w-full text-left border-collapse text-xs">
                     <thead>
-                        <tr class="bg-slate-950/60 text-slate-400 uppercase tracking-wider border-b border-slate-800">
-                            <th class="p-4">Code / ID</th>
-                            <th class="p-4">Fabric Name</th>
-                            <th class="p-4">Category</th>
-                            <th class="p-4">Actual Stock</th>
-                            <th class="p-4 text-center">Action</th>
+                        <tr class="bg-slate-950/80 text-slate-400 uppercase text-[10px] tracking-wider border-b border-slate-800">
+                            <th class="p-3.5">Fabric Code</th>
+                            <th class="p-3.5">Fabric Name & Details</th>
+                            <th class="p-3.5 text-right">Initial Stock</th>
+                            <th class="p-3.5 text-right">Used / Cut</th>
+                            <th class="p-3.5 text-right">Remaining Balance</th>
+                            <th class="p-3.5 text-center">Action</th>
                         </tr>
                     </thead>
-                    <tbody id="inventory-table-body" class="divide-y divide-slate-800/60 text-slate-300">
+                    <tbody id="inventory-table-body" class="divide-y divide-slate-800/50 font-medium">
                         <!-- Dynamic Rows loaded via JS -->
                     </tbody>
                 </table>
             </div>
         </div>
 
+        <!-- Recent Cutting Log Activity -->
+        <div class="bg-slate-900/60 border border-slate-800/80 rounded-3xl p-5 shadow-xl">
+            <h3 class="text-xs font-bold text-slate-300 uppercase tracking-wider mb-3 flex items-center gap-2">
+                <span>✂️</span> Recent Cut Logs Today
+            </h3>
+            <div id="logs-container" class="space-y-2 text-xs text-slate-400">
+                <p class="text-slate-500 italic text-[11px]">No cuts recorded yet in this session.</p>
+            </div>
+        </div>
+
     </main>
 
     <!-- Footer -->
-    <footer class="w-full text-center py-4 border-t border-slate-800 text-xs text-slate-500">
-        Essentials By D • Live Stock Management System
+    <footer class="w-full text-center py-4 border-t border-slate-800/80 text-xs text-slate-500">
+        Essentials By D • Premium Inventory & Cutting Software
     </footer>
 
-    <!-- SCANNER MODAL -->
-    <div id="scanner-modal" class="fixed inset-0 bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-4 hidden z-50">
+    <!-- SCANNER MODAL (Hidden by default, triggered only via button) -->
+    <div id="scanner-modal" class="fixed inset-0 bg-slate-950/90 backdrop-blur-md flex items-center justify-center p-4 hidden z-50">
         <div class="bg-slate-900 border border-slate-700/80 rounded-3xl p-5 w-full max-w-sm shadow-2xl relative space-y-4">
             
             <div class="flex items-center justify-between">
-                <span class="text-xs font-bold text-amber-400 uppercase tracking-wider">📷 Barcode Scanner</span>
-                <button onclick="closeScannerModal()" class="text-slate-400 hover:text-white bg-slate-800 rounded-full w-8 h-8 flex items-center justify-center text-sm">
+                <div class="flex items-center gap-2">
+                    <span class="w-2.5 h-2.5 bg-rose-500 rounded-full animate-ping"></span>
+                    <span class="text-xs font-bold text-amber-400 uppercase tracking-wider">Camera Barcode Scanner</span>
+                </div>
+                <button onclick="closeScannerModal()" class="text-slate-400 hover:text-white bg-slate-800 rounded-full w-7 h-7 flex items-center justify-center text-xs">
                     ✕
                 </button>
             </div>
 
-            <div class="w-full overflow-hidden rounded-2xl bg-black border border-slate-800 relative min-h-[240px] flex items-center justify-center">
+            <div class="w-full overflow-hidden rounded-2xl bg-black border border-slate-800 relative min-h-[250px] flex items-center justify-center">
                 <video id="video" class="w-full h-full object-cover rounded-2xl"></video>
             </div>
 
             <p class="text-[11px] text-slate-400 text-center font-medium">
-                Fabric ka barcode camera ke samne karein
+                Fabric ka Barcode camera frame ke samne rakhein
             </p>
         </div>
     </div>
 
     <!-- CUT DEDUCTION POPUP MODAL -->
-    <div id="cut-popup" class="fixed inset-0 bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-4 hidden z-50">
+    <div id="cut-popup" class="fixed inset-0 bg-slate-950/90 backdrop-blur-md flex items-center justify-center p-4 hidden z-50">
         <div class="bg-slate-900 border border-slate-700/80 rounded-3xl p-6 w-full max-w-xs shadow-2xl relative">
             
-            <button onclick="closeCutPopup()" class="absolute top-4 right-4 text-slate-400 hover:text-white bg-slate-800 rounded-full w-8 h-8 flex items-center justify-center text-sm">
+            <button onclick="closeCutPopup()" class="absolute top-4 right-4 text-slate-400 hover:text-white bg-slate-800 rounded-full w-7 h-7 flex items-center justify-center text-xs">
                 ✕
             </button>
 
-            <div class="text-center mb-5 mt-2">
+            <div class="text-center mb-5 mt-1">
                 <span class="bg-amber-500/10 text-amber-400 border border-amber-500/20 text-[11px] px-3 py-1 rounded-full font-mono font-bold tracking-wider uppercase inline-block mb-2" id="popup-barcode">
                     CODE: ---
                 </span>
-                <h3 class="text-base font-bold text-white" id="popup-title">Cut Entry</h3>
-                <p class="text-xs text-slate-400 mt-1" id="popup-stock-info">Available: 0m</p>
+                <h3 class="text-base font-bold text-white" id="popup-title">Fabric Cut Entry</h3>
+                <p class="text-xs text-slate-400 mt-1" id="popup-stock-info">Current Balance: 0m</p>
             </div>
 
-            <div class="space-y-
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-300 mb-1.5 text-center">
+                        Kitne Meter Cut Kiya?
+                    </label>
+                    <div class="relative">
+                        <input type="number" 
+                               id="meters-input" 
+                               step="0.1" 
+                               inputmode="decimal"
+                               placeholder="0.0" 
+                               class="w-full bg-slate-950 border-2 border-slate-700 focus:border-amber-400 rounded-2xl px-4 py-3 text-2xl text-center font-black text-amber-400 outline-none transition-colors">
+                        <span class="absolute right-4 top-4 text-xs font-bold text-slate-500">Meters</span>
+                    </div>
+                </div>
+
+                <div class="pt-2">
+                    <button onclick="submitCut()" class="w-full bg-rose-600 hover:bg-rose-700 active:scale-95 text-white font-bold py-3.5 rounded-2xl shadow-lg shadow-rose-600/20 transition flex items-center justify-center gap-2 text-sm">
+                        <span>✂️</span> <span>CONFIRM CUT & DEDUCT</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Logic Script -->
+    <script>
+        // Master Inventory Database Structure
+        let inventory = [
+            { code: "FAB-101", name: "Pure Raw Silk (Black)", category: "Bridal / Formal", initial: 150.0, used: 10.0 },
+            { code: "FAB-102", name: "Chiffon Net (Maroon)", category: "Casual / Party", initial: 100.0, used: 5.0 },
+            { code: "FAB-103", name: "Velvet Royal Blue", category: "Winter Collection", initial: 80.0, used: 20.0 },
+            { code: "FAB-104", name: "Organza Gold Embroidered", category: "Formal Collection", initial: 120.0, used: 0.0 }
+        ];
+
+        let activeItemCode = "";
+        let codeReader;
+        let isScanningActive = false;
+        let recentLogs = [];
+
+        // Calculate Totals & Render Stats + Table
+        function renderDashboard() {
+            const tbody = document.getElementById('inventory-table-body');
+            tbody.innerHTML = "";
+
+            let totalItems = inventory.length;
+            let totalStock = 0;
+            let totalUsed = 0;
+            let totalRemaining = 0;
+
+            inventory.forEach(item => {
+                const remaining = item.initial - item.used;
+                totalStock += item.initial;
+                totalUsed += item.used;
+                totalRemaining += remaining;
+
+                tbody.innerHTML += `
+                    <tr class="hover:bg-slate-800/40 transition">
+                        <td class="p-3.5 font-mono font-bold text-amber-400">${item.code}</td>
+                        <td class="p-3.5">
+                            <div class="font-bold text-white">${item.name}</div>
+                            <div class="text-[10px] text-slate-400">${item.category}</div>
+                        </td>
+                        <td class="p-3.5 text-right font-mono font-bold text-slate-400">${item.initial.toFixed(1)}m</td>
+                        <td class="p-3.5 text-right font-mono font-bold text-rose-400">-${item.used.toFixed(1)}m</td>
+                        <td class="p-3.5 text-right font-mono font-bold ${remaining > 20 ? 'text-emerald-400' : 'text-amber-400'}">${remaining.toFixed(1)}m</td>
+                        <td class="p-3.5 text-center">
+                            <button onclick="openCutPopupByCode('${item.code}')" class="bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 px-3 py-1.5 rounded-xl font-bold transition text-[11px] active:scale-95">
+                                ✂️ Cut
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            // Update Header Stats Cards
+            document.getElementById('stat-total-items').innerText = totalItems;
+            document.getElementById('stat-total-stock').innerText = totalStock.toFixed(1) + "m";
+            document.getElementById('stat-used-meters').innerText = totalUsed.toFixed(1) + "m";
+            document.getElementById('stat-remaining-stock').innerText = totalRemaining.toFixed(1) + "m";
+        }
+
+        // Search Filter
+        function filterInventory() {
+            const query = document.getElementById('search-input').value.toLowerCase();
+            const rows = document.querySelectorAll('#inventory-table-body tr');
+            
+            rows.forEach(row => {
+                const text = row.innerText.toLowerCase();
+                row.style.display = text.includes(query) ? '' : 'none';
+            });
+        }
+
+        // Camera Scanner Functions
+        async function openScannerModal() {
+            document.getElementById('scanner-modal').classList.remove('hidden');
+
+            if (!codeReader) {
+                codeReader = new ZXing.BrowserBarcodeReader();
+            }
+
+            try {
+                isScanningActive = true;
+                const videoInputDevices = await codeReader.listVideoInputDevices();
+                
+                if (videoInputDevices.length === 0) {
+                    alert("Koi camera nahi mila!");
+                    closeScannerModal();
+                    return;
+                }
+
+                let selectedDeviceId = videoInputDevices[0].deviceId;
+                for (const device of videoInputDevices) {
+                    const name = device.label.toLowerCase();
+                    if (name.includes('back') || name.includes('rear') || name.includes('environment')) {
+                        selectedDeviceId = device.deviceId;
+                        break;
+                    }
+                }
+
+                codeReader.decodeFromVideoDevice(selectedDeviceId, 'video', (result, err) => {
+                    if (result && isScanningActive) {
+                        const scannedText = result.getText().trim();
+                        if (scannedText) {
+                            closeScannerModal();
+                            openCutPopupByCode(scannedText);
+                        }
+                    }
+                });
+            } catch (err) {
+                console.error("Camera error:", err);
+                alert("Camera ki permission allow karein!");
+                closeScannerModal();
+            }
+        }
+
+        function closeScannerModal() {
+            if (codeReader) {
+                codeReader.reset();
+            }
+            isScanningActive = false;
+            document.getElementById('scanner-modal').classList.add('hidden');
+        }
+
+        // Popup Open for Cut Record
+        function openCutPopupByCode(code) {
+            activeItemCode = code;
+            const item = inventory.find(i => i.code.toLowerCase() === code.toLowerCase());
+
+            document.getElementById('popup-barcode').innerText = "CODE: " + code;
+            
+            if (item) {
+                const remaining = item.initial - item.used;
+                document.getElementById('popup-title').innerText = item.name;
+                document.getElementById('popup-stock-info').innerText = "Available Balance: " + remaining.toFixed(1) + " Meters";
+            } else {
+                document.getElementById('popup-title').innerText = "New Scanned Fabric Code";
+                document.getElementById('popup-stock-info').innerText = "Item code not in preset ledger";
+            }
+
+            document.getElementById('meters-input').value = '';
+            document.getElementById('cut-popup').classList.remove('hidden');
+        }
+
+        function closeCutPopup() {
+            document.getElementById('cut-popup').classList.add('hidden');
+        }
+
+        // Submit Cut Deduction
+        function submitCut() {
+            const metersVal = document.getElementById('meters-input').value;
+            const cutMeters = parseFloat(metersVal);
+
+            if (!cutMeters || cutMeters <= 0) {
+                alert("Please valid meters enter karein!");
+                return;
+            }
+
+            let item = inventory.find(i => i.code.toLowerCase() === activeItemCode.toLowerCase());
+            
+            if (!item) {
+                // Add dynamically if new scanned code
+                item = { code: activeItemCode, name: "Scanned Fabric #" + activeItemCode, category: "General", initial: 100.0, used: 0.0 };
+                inventory.push(item);
+            }
+
+            const currentRemaining = item.initial - item.used;
+            if (cutMeters > currentRemaining) {
+                alert("Warning: Input meters available stock se ziada hain!");
+            }
+
+            // Deduct stock (Increase used meters)
+            item.used += cutMeters;
+
+            // Log entry
+            const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            recentLogs.unshift(`[${time}] Deducted <b>${cutMeters}m</b> from <b>${item.code}</b> (${item.name})`);
+
+            updateLogsUI();
+            renderDashboard();
+            closeCutPopup();
+
+            alert(`✂️ Cut Deduction Successful!\n\nFabric: ${item.name} (${item.code})\nDeducted: ${cutMeters} Meters`);
+        }
+
+        function updateLogsUI() {
+            const container = document.getElementById('logs-container');
+            if (recentLogs.length === 0) return;
+            
+            container.innerHTML = recentLogs.slice(0, 5).map(log => `
+                <div class="bg-slate-950/60 p-2.5 rounded-xl border border-slate-800/80 flex items-center justify-between text-slate-300">
+                    <span>${log}</span>
+                    <span class="text-emerald-400 font-bold">✓ Deducted</span>
+                </div>
+            `).join('');
+        }
+
+        // Initialize dashboard on load
+        window.onload = renderDashboard;
+    </script>
+</body>
+</html>
