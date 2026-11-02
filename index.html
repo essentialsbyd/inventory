@@ -14,8 +14,11 @@
             border-radius: 1rem; 
             width: 100% !important;
         }
-        #reader { border: none !important; }
-        #reader__scan_region { background: transparent !important; }
+        #reader { border: none !important; background: transparent !important; }
+        /* Hide extra default dropdowns */
+        #reader__dashboard_section_csr, #reader__dashboard_section_swaplink, #reader select {
+            display: none !important;
+        }
     </style>
 </head>
 <body class="bg-slate-950 text-white min-h-screen flex flex-col justify-between items-center p-4 font-sans select-none">
@@ -30,22 +33,27 @@
     <main class="w-full max-w-sm my-auto flex flex-col items-center">
         <div class="w-full bg-slate-900/90 p-4 rounded-3xl border border-slate-800 shadow-2xl backdrop-blur-md">
             <div class="flex items-center justify-between mb-3 px-1">
-                <span class="text-xs font-semibold text-amber-400 uppercase tracking-wider">📷 Back Camera Active</span>
-                <span id="status-tag" class="text-[10px] bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded-full font-mono">Ready to scan</span>
+                <span class="text-xs font-semibold text-amber-400 uppercase tracking-wider">📷 Scanner Active</span>
+                <span id="status-tag" class="text-[10px] bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded-full font-mono">Ready</span>
             </div>
             
             <!-- Camera Render Box -->
             <div id="reader" class="w-full overflow-hidden rounded-2xl bg-black border border-slate-800 min-h-[260px]"></div>
             
+            <!-- Switch Camera Button -->
+            <button onclick="switchCamera()" class="w-full mt-3 bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-200 font-bold py-2.5 rounded-xl text-xs transition flex items-center justify-center gap-2 border border-slate-700">
+                <span>🔄</span> <span>Switch Camera (Front / Back)</span>
+            </button>
+
             <p class="text-[11px] text-slate-400 text-center mt-3 font-medium">
-                Fabric Barcode ko peechle camera ke samne rakhein
+                Fabric Barcode ko camera ke samne rakhein
             </p>
         </div>
     </main>
 
     <!-- Quick Footer -->
     <footer class="w-full text-center py-2 text-[10px] text-slate-600">
-        Mobile Scanner Mode • Back Camera Locked
+        Mobile Scanner Mode • Switch Button Enabled
     </footer>
 
     <!-- POPUP MODAL -->
@@ -98,6 +106,7 @@
     <!-- Logic Script -->
     <script>
         let html5QrCode;
+        let currentFacingMode = "environment"; // Default to back camera
         let lastScannedCode = "";
 
         function onScanSuccess(decodedText, decodedResult) {
@@ -109,8 +118,7 @@
             
             document.getElementById('cut-popup').classList.remove('hidden');
 
-            // Pause scanning while popup is open
-            if(html5QrCode) {
+            if(html5QrCode && html5QrCode.isScanning) {
                 html5QrCode.pause();
             }
         }
@@ -133,21 +141,38 @@
             closePopup();
         }
 
-        // Initialize with Back Camera Forced (environment)
-        window.addEventListener('DOMContentLoaded', () => {
+        // Start Scanner Function
+        function startScanner() {
             html5QrCode = new Html5Qrcode("reader");
             const config = { fps: 15, qrbox: { width: 200, height: 200 } };
             
-            // Explicitly requesting environment (back) camera
             html5QrCode.start(
-                { facingMode: "environment" }, 
+                { facingMode: currentFacingMode }, 
                 config, 
                 onScanSuccess
             ).catch(err => {
-                console.error("Back camera error, falling back to any camera", err);
-                // Fallback if environment camera fails
+                console.error("Camera start error", err);
+                // Fallback to user camera if environment fails
                 html5QrCode.start({ facingMode: "user" }, config, onScanSuccess);
             });
+        }
+
+        // Switch Camera Functionality
+        function switchCamera() {
+            if (!html5QrCode) return;
+            
+            html5QrCode.stop().then(() => {
+                // Toggle between back ("environment") and front ("user")
+                currentFacingMode = (currentFacingMode === "environment") ? "user" : "environment";
+                startScanner();
+            }).catch(err => {
+                console.error("Failed to clear scanner. ", err);
+            });
+        }
+
+        // Initialize on load
+        window.addEventListener('DOMContentLoaded', () => {
+            startScanner();
         });
     </script>
 </body>
