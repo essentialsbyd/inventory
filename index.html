@@ -3,87 +3,146 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Master Cutter Entry - Essentials By D</title>
+    <title>Essentials By D - Master Inventory & Cutting</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- ZXing Barcode Scanner Library -->
     <script type="text/javascript" src="https://unpkg.com/@zxing/library@0.19.1"></script>
 </head>
-<body class="bg-slate-950 text-white min-h-screen flex flex-col justify-between items-center p-4 font-sans select-none">
+<body class="bg-slate-950 text-white min-h-screen flex flex-col justify-between font-sans select-none">
 
-    <!-- App Header -->
-    <header class="w-full text-center py-4 border-b border-slate-800">
-        <h1 class="text-xl font-black tracking-widest text-amber-400">ESSENTIALS BY D</h1>
-        <p class="text-xs text-slate-400 font-medium mt-0.5">Master Cutter Quick Entry Panel</p>
+    <!-- Top Navigation Header -->
+    <header class="w-full bg-slate-900 border-b border-slate-800 px-6 py-4 flex items-center justify-between">
+        <div>
+            <h1 class="text-lg font-black tracking-widest text-amber-400">ESSENTIALS BY D</h1>
+            <p class="text-[11px] text-slate-400 font-medium">Master Inventory & Cutting Management</p>
+        </div>
+        <div class="flex items-center gap-2">
+            <!-- Scan Trigger Button on Header -->
+            <button onclick="openScannerModal()" class="bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold px-4 py-2 rounded-xl text-xs flex items-center gap-1.5 shadow-lg active:scale-95 transition">
+                <span>📷</span> <span>Scan Barcode</span>
+            </button>
+        </div>
     </header>
 
-    <!-- Main Container -->
-    <main class="w-full max-w-sm my-auto flex flex-col items-center">
+    <!-- Main Inventory Dashboard Container -->
+    <main class="w-full max-w-5xl mx-auto p-4 md:p-6 space-y-6 flex-grow">
         
-        <!-- MOBILE SCANNER START SCREEN -->
-        <div id="mobile-view" class="w-full space-y-4">
-            <div class="w-full bg-slate-900/90 p-6 rounded-3xl border border-slate-800 shadow-2xl text-center space-y-4 backdrop-blur-md">
-                <div class="w-16 h-16 bg-amber-500/10 text-amber-400 rounded-2xl mx-auto flex items-center justify-center text-3xl border border-amber-500/20">
-                    📱
-                </div>
+        <!-- Stats / Quick Overview Row -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div class="bg-slate-900/90 border border-slate-800 p-5 rounded-3xl shadow-xl flex items-center justify-between">
                 <div>
-                    <h2 class="text-lg font-bold text-white">Mobile Scanner Mode</h2>
-                    <p class="text-xs text-slate-400 mt-1">Barcode scan karne ke liye button dabayein</p>
+                    <p class="text-xs text-slate-400 font-medium">Total Fabrics</p>
+                    <h3 class="text-2xl font-black text-white mt-1">24 Items</h3>
                 </div>
-                <button onclick="startScanning()" class="w-full bg-amber-500 hover:bg-amber-600 active:scale-95 text-slate-950 font-black py-4 rounded-2xl shadow-xl transition text-base tracking-wide flex items-center justify-center gap-2">
-                    <span>⚡</span> <span>OPEN CAMERA & SCAN</span>
-                </button>
+                <div class="w-12 h-12 bg-amber-500/10 text-amber-400 rounded-2xl flex items-center justify-center text-xl border border-amber-500/20">
+                    📦
+                </div>
+            </div>
+            <div class="bg-slate-900/90 border border-slate-800 p-5 rounded-3xl shadow-xl flex items-center justify-between">
+                <div>
+                    <p class="text-xs text-slate-400 font-medium">Total Cuts Today</p>
+                    <h3 class="text-2xl font-black text-rose-400 mt-1">12.5 Meters</h3>
+                </div>
+                <div class="w-12 h-12 bg-rose-500/10 text-rose-400 rounded-2xl flex items-center justify-center text-xl border border-rose-500/20">
+                    ✂️
+                </div>
+            </div>
+            <div class="bg-slate-900/90 border border-slate-800 p-5 rounded-3xl shadow-xl flex items-center justify-between">
+                <div>
+                    <p class="text-xs text-slate-400 font-medium">System Status</p>
+                    <h3 class="text-sm font-bold text-emerald-400 mt-1">● Online / Sync</h3>
+                </div>
+                <div class="w-12 h-12 bg-emerald-500/10 text-emerald-400 rounded-2xl flex items-center justify-center text-xl border border-emerald-500/20">
+                    ⚡
+                </div>
             </div>
         </div>
 
-        <!-- SCANNER BOX (Hidden initially, opens on mobile button click) -->
-        <div id="scanner-container" class="w-full bg-slate-900/90 p-4 rounded-3xl border border-slate-800 shadow-2xl backdrop-blur-md hidden">
-            <div class="flex items-center justify-between mb-3 px-1">
-                <span class="text-xs font-semibold text-amber-400 uppercase tracking-wider">📷 Scanner Active</span>
-                <button onclick="stopScanning()" class="text-[11px] bg-rose-500/10 text-rose-400 px-2.5 py-1 rounded-full font-bold border border-rose-500/20">
-                    ✕ Stop Camera
-                </button>
+        <!-- Inventory Table Section -->
+        <div class="bg-slate-900/90 border border-slate-800 rounded-3xl shadow-xl overflow-hidden">
+            <div class="p-5 border-b border-slate-800 flex items-center justify-between">
+                <h2 class="text-sm font-bold text-white uppercase tracking-wider">Fabric Stock Records</h2>
+                <span class="text-xs text-slate-400">Live Inventory List</span>
             </div>
-            
-            <div class="w-full overflow-hidden rounded-2xl bg-black border border-slate-800 relative min-h-[260px] flex items-center justify-center">
-                <video id="video" class="w-full h-full object-cover rounded-2xl"></video>
-            </div>
-            
-            <p class="text-[11px] text-slate-400 text-center mt-3 font-medium">
-                Fabric Barcode ko camera ke samne rakhein
-            </p>
-        </div>
-
-        <!-- PC / LAPTOP DATA ENTRY VIEW (Appears on PC automatically) -->
-        <div id="pc-view" class="w-full bg-slate-900/90 p-6 rounded-3xl border border-slate-800 shadow-2xl text-center space-y-4 backdrop-blur-md hidden">
-            <div class="w-16 h-16 bg-blue-500/10 text-blue-400 rounded-2xl mx-auto flex items-center justify-center text-3xl border border-blue-500/20">
-                💻
-            </div>
-            <div>
-                <h2 class="text-lg font-bold text-white">PC Management Panel</h2>
-                <p class="text-xs text-slate-400 mt-1">Aap PC par hain. Barcode scanning sirf mobile par hoti hai.</p>
-            </div>
-            <div class="p-3 bg-slate-950 rounded-2xl border border-slate-800 text-left space-y-2">
-                <label class="block text-[11px] font-medium text-slate-400">Manual Fabric Code (PC Entry):</label>
-                <input type="text" id="pc-code-input" placeholder="Enter Code e.g. FAB-101" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white outline-none focus:border-amber-400">
-                <button onclick="submitPCEntry()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 rounded-xl text-xs transition">
-                    Proceed to Cut Entry
-                </button>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse text-xs">
+                    <thead>
+                        <tr class="bg-slate-950/60 text-slate-400 uppercase tracking-wider border-b border-slate-800">
+                            <th class="p-4">Code / ID</th>
+                            <th class="p-4">Fabric Name</th>
+                            <th class="p-4">Category</th>
+                            <th class="p-4">Available Stock</th>
+                            <th class="p-4 text-center">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-800/60 text-slate-300">
+                        <tr class="hover:bg-slate-800/30 transition">
+                            <td class="p-4 font-mono font-bold text-amber-400">FAB-101</td>
+                            <td class="p-4 font-medium text-white">Pure Raw Silk (Black)</td>
+                            <td class="p-4 text-slate-400">Bridal / Formal</td>
+                            <td class="p-4 font-bold">140 Meters</td>
+                            <td class="p-4 text-center">
+                                <button onclick="triggerManualEntry('FAB-101')" class="bg-slate-800 hover:bg-slate-700 text-slate-200 px-3 py-1.5 rounded-xl font-bold transition">Cut Entry</button>
+                            </td>
+                        </tr>
+                        <tr class="hover:bg-slate-800/30 transition">
+                            <td class="p-4 font-mono font-bold text-amber-400">FAB-102</td>
+                            <td class="p-4 font-medium text-white">Chiffon Net (Maroon)</td>
+                            <td class="p-4 text-slate-400">Casual / Party</td>
+                            <td class="p-4 font-bold">95 Meters</td>
+                            <td class="p-4 text-center">
+                                <button onclick="triggerManualEntry('FAB-102')" class="bg-slate-800 hover:bg-slate-700 text-slate-200 px-3 py-1.5 rounded-xl font-bold transition">Cut Entry</button>
+                            </td>
+                        </tr>
+                        <tr class="hover:bg-slate-800/30 transition">
+                            <td class="p-4 font-mono font-bold text-amber-400">FAB-103</td>
+                            <td class="p-4 font-medium text-white">Velvet Royal Blue</td>
+                            <td class="p-4 text-slate-400">Winter Collection</td>
+                            <td class="p-4 font-bold">60 Meters</td>
+                            <td class="p-4 text-center">
+                                <button onclick="triggerManualEntry('FAB-103')" class="bg-slate-800 hover:bg-slate-700 text-slate-200 px-3 py-1.5 rounded-xl font-bold transition">Cut Entry</button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
             </div>
         </div>
 
     </main>
 
-    <!-- Quick Footer -->
-    <footer class="w-full text-center py-2 text-[10px] text-slate-600">
-        Essentials By D • Smart Inventory System
+    <!-- Footer -->
+    <footer class="w-full text-center py-4 border-t border-slate-800 text-xs text-slate-500">
+        Essentials By D • Inventory Management System
     </footer>
 
-    <!-- POPUP MODAL (CUT ONLY) -->
-    <div id="cut-popup" class="fixed inset-0 bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-4 hidden z-50 transition-all">
+    <!-- SCANNER MODAL (Opens only when "Scan Barcode" is clicked) -->
+    <div id="scanner-modal" class="fixed inset-0 bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-4 hidden z-50">
+        <div class="bg-slate-900 border border-slate-700/80 rounded-3xl p-5 w-full max-w-sm shadow-2xl relative space-y-4">
+            
+            <div class="flex items-center justify-between">
+                <span class="text-xs font-bold text-amber-400 uppercase tracking-wider">📷 Barcode Scanner</span>
+                <button onclick="closeScannerModal()" class="text-slate-400 hover:text-white bg-slate-800 rounded-full w-8 h-8 flex items-center justify-center text-sm">
+                    ✕
+                </button>
+            </div>
+
+            <!-- Video Viewport -->
+            <div class="w-full overflow-hidden rounded-2xl bg-black border border-slate-800 relative min-h-[240px] flex items-center justify-center">
+                <video id="video" class="w-full h-full object-cover rounded-2xl"></video>
+            </div>
+
+            <p class="text-[11px] text-slate-400 text-center font-medium">
+                Fabric ka barcode camera ke samne karein
+            </p>
+        </div>
+    </div>
+
+    <!-- CUT DEDUCTION POPUP MODAL -->
+    <div id="cut-popup" class="fixed inset-0 bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-4 hidden z-50">
         <div class="bg-slate-900 border border-slate-700/80 rounded-3xl p-6 w-full max-w-xs shadow-2xl relative">
             
-            <button onclick="closePopup()" class="absolute top-4 right-4 text-slate-400 hover:text-white bg-slate-800 rounded-full w-8 h-8 flex items-center justify-center text-sm">
+            <button onclick="closeCutPopup()" class="absolute top-4 right-4 text-slate-400 hover:text-white bg-slate-800 rounded-full w-8 h-8 flex items-center justify-center text-sm">
                 ✕
             </button>
 
@@ -91,7 +150,7 @@
                 <span class="bg-amber-500/10 text-amber-400 border border-amber-500/20 text-[11px] px-3 py-1 rounded-full font-mono font-bold tracking-wider uppercase inline-block mb-2" id="popup-barcode">
                     CODE: ---
                 </span>
-                <h3 class="text-base font-bold text-white" id="popup-title">Fabric Scanned</h3>
+                <h3 class="text-base font-bold text-white" id="popup-title">Cut Entry</h3>
             </div>
 
             <div class="space-y-4">
@@ -125,22 +184,8 @@
         let lastScannedCode = "";
         let isScanningActive = false;
 
-        // Detect if device is Mobile or PC
-        window.addEventListener('DOMContentLoaded', () => {
-            const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-            
-            if (isMobile) {
-                document.getElementById('mobile-view').classList.remove('hidden');
-                document.getElementById('pc-view').classList.add('hidden');
-            } else {
-                document.getElementById('mobile-view').classList.add('hidden');
-                document.getElementById('pc-view').classList.remove('hidden');
-            }
-        });
-
-        async function startScanning() {
-            document.getElementById('mobile-view').classList.add('hidden');
-            document.getElementById('scanner-container').classList.remove('hidden');
+        async function openScannerModal() {
+            document.getElementById('scanner-modal').classList.remove('hidden');
 
             if (!codeReader) {
                 codeReader = new ZXing.BrowserBarcodeReader();
@@ -152,11 +197,10 @@
                 
                 if (videoInputDevices.length === 0) {
                     alert("Koi camera nahi mila!");
-                    stopScanning();
+                    closeScannerModal();
                     return;
                 }
 
-                // Pick back camera for mobile
                 let selectedDeviceId = videoInputDevices[0].deviceId;
                 for (const device of videoInputDevices) {
                     const name = device.label.toLowerCase();
@@ -170,53 +214,40 @@
                     if (result && isScanningActive) {
                         lastScannedCode = result.getText();
                         if (lastScannedCode) {
-                            triggerPopup(lastScannedCode);
+                            closeScannerModal();
+                            triggerCutPopup(lastScannedCode);
                         }
                     }
                 });
             } catch (err) {
                 console.error("Camera error:", err);
                 alert("Camera ki permission allow karein!");
-                stopScanning();
+                closeScannerModal();
             }
         }
 
-        function triggerPopup(code) {
-            isScanningActive = false;
-            document.getElementById('popup-barcode').innerText = "CODE: " + code;
-            document.getElementById('popup-title').innerText = "Fabric Code #" + code;
-            document.getElementById('meters-input').value = '';
-            document.getElementById('cut-popup').classList.remove('hidden');
-        }
-
-        function closePopup() {
-            document.getElementById('cut-popup').classList.add('hidden');
-            const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-            if (isMobile) {
-                isScanningActive = true;
-            }
-        }
-
-        function stopScanning() {
+        function closeScannerModal() {
             if (codeReader) {
                 codeReader.reset();
             }
             isScanningActive = false;
-            document.getElementById('scanner-container').classList.add('hidden');
-            document.getElementById('mobile-view').classList.remove('hidden');
+            document.getElementById('scanner-modal').classList.add('hidden');
         }
 
-        function submitPCEntry() {
-            const code = document.getElementById('pc-code-input').value.trim();
-            if (!code) {
-                alert("Please fabric code enter karein!");
-                return;
-            }
+        function triggerManualEntry(code) {
             lastScannedCode = code;
+            triggerCutPopup(code);
+        }
+
+        function triggerCutPopup(code) {
             document.getElementById('popup-barcode').innerText = "CODE: " + code;
             document.getElementById('popup-title').innerText = "Fabric Code #" + code;
             document.getElementById('meters-input').value = '';
             document.getElementById('cut-popup').classList.remove('hidden');
+        }
+
+        function closeCutPopup() {
+            document.getElementById('cut-popup').classList.add('hidden');
         }
 
         function submitCut() {
@@ -227,7 +258,7 @@
             }
 
             alert(`✂️ Cut Recorded Successfully!\n\nFabric Code: ${lastScannedCode}\nDeducted Meters: ${meters}m`);
-            closePopup();
+            closeCutPopup();
         }
     </script>
 </body>
