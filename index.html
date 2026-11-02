@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html lang="ur" dir="ltr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ESSENTIALS BY D INVENTORY SYSTEM</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+  <style>
+    @media print {
+      body * { visibility: hidden; }
+      #printArea, #printArea * { visibility: visible; }
+      #printArea { position: absolute; left: 0; top: 0; width: 100%; }
+      .no-print { display: none !important; }
+    }
+  </style>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen font-sans">
+
+  <!-- Header Navigation -->
+  <header class="bg-slate-800 border-b border-slate-700 p-4 sticky top-0 z-30">
+    <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-4">
+      <div class="flex items-center gap-3">
+        <div class="p-2 bg-indigo-600 rounded-lg text-white">
+          <i data-lucide="scissors" class="w-6 h-6"></i>
+        </div>
+        <div>
+          <h1 class="text-xl font-bold tracking-wide uppercase">ESSENTIALS BY D INVENTORY SYSTEM</h1>
+          <p class="text-xs text-indigo-400">Master Cutter & Barcode Studio</p>
+        </div>
+      </div>
+
+      <!-- Sync Status Indicator -->
+      <div class="flex items-center gap-4">
+        <div id="syncStatus" class="flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
+          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+          <span>System Active</span>
+        </div>
+
+        <button onclick="openQRConnectModal()" class="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 px-4 py-2 rounded-lg text-sm font-semibold transition">
+          <i data-lucide="qr-code" class="w-4 h-4"></i>
+          <span>Mobile Link QR</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="max-w-7xl mx-auto p-4 md:p-6 space-y-6">
+
+    <!-- Action Bar & Controls -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+      
+      <!-- Scan Mode Switcher -->
+      <div class="bg-slate-800 border border-slate-700 p-4 rounded-xl flex flex-col justify-between">
+        <label class="text-xs font-medium text-slate-400 mb-2 block">Cutter Scan Action Mode</label>
+        <div class="grid grid-cols-2 gap-2">
+          <button id="modeCut" onclick="setScanMode('cut')" class="flex items-center justify-center gap-2 py-2.5 px-3 rounded-lg font-bold text-sm bg-rose-600 text-white shadow-lg transition">
+            <i data-lucide="minus-circle" class="w-4 h-4"></i> Cut (-1)
+          </button>
+          <button id="modeAdd" onclick="setScanMode('add')" class="flex items-center justify-center gap-2 py-2.5 px-3 rounded-lg font-bold text-sm bg-slate-700 text-slate-300 hover:bg-slate-600 transition">
+            <i data-lucide="plus-circle" class="w-4 h-4"></i> Stock (+1)
+          </button>
+        </div>
+      </div>
+
+      <!-- Quick Laptop Camera Scanner -->
+      <div class="bg-slate-800 border border-slate-700 p-4 rounded-xl flex items-center justify-between">
+        <div>
+          <h3 class="font-semibold text-sm">Laptop Camera Scan</h3>
+          <p class="text-xs text-slate-400">Scan directly from camera</p>
+        </div>
+        <button onclick="toggleCameraScanner()" class="p-3 bg-slate-700 hover:bg-slate-600 rounded-lg text-indigo-400 transition">
+          <i data-lucide="camera" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <!-- Add New Fabric / Item -->
+      <div class="bg-slate-800 border border-slate-700 p-4 rounded-xl flex items-center justify-between">
+        <div>
+          <h3 class="font-semibold text-sm">Add New Item</h3>
+          <p class="text-xs text-slate-400">Register new fabric stock</p>
+        </div>
+        <button onclick="openAddItemModal()" class="p-3 bg-indigo-600 hover:bg-indigo-500 rounded-lg text-white transition">
+          <i data-lucide="plus" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <!-- Export & Print All -->
+      <div class="bg-slate-800 border border-slate-700 p-4 rounded-xl flex items-center justify-between">
+        <div>
+          <h3 class="font-semibold text-sm">Print & Backup</h3>
+          <p class="text-xs text-slate-400">Export inventory / barcodes</p>
+        </div>
+        <div class="flex gap-2">
+          <button onclick="exportCSV()" class="p-2.5 bg-slate-700 hover:bg-slate-600 rounded-lg text-emerald-400 transition" title="Export Excel / CSV">
+            <i data-lucide="file-spreadsheet" class="w-5 h-5"></i>
+          </button>
+          <button onclick="openPrintStudioModal()" class="p-2.5 bg-slate-700 hover:bg-slate-600 rounded-lg text-indigo-400 transition" title="Barcode Print Studio">
+            <i data-lucide="printer" class="w-5 h-5"></i>
+          </button>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Live Mobile Camera Scanner Area -->
+    <div id="cameraScannerCard" class="hidden bg-slate-800 border border-slate-700 p-4 rounded-xl text-center space-y-3">
+      <div class="flex justify-between items-center border-b border-slate-700 pb-2">
+        <span class="text-sm font-semibold flex items-center gap-2">
+          <i data-lucide="camera" class="w-4 h-4 text-indigo-400"></i> Active Scanner Lens
+        </span>
+        <button onclick="toggleCameraScanner()" class="text-slate-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
+      </div>
+      <div id="interactiveScanner" class="w-full max-w-md mx-auto overflow-hidden rounded-lg border border-slate-600"></div>
+    </div>
+
+    <!-- Inventory Data Table -->
+    <div class="bg-slate-800 border border-slate-700 rounded-xl overflow-hidden shadow-xl">
+      <div class="p-4 border-b border-slate-700 flex flex-wrap items-center justify-between gap-3">
+        <div class="flex items-center gap-2">
+          <i data-lucide="layers" class="w-5 h-5 text-indigo-400"></i>
+          <h2 class="font-bold text-lg">ESSENTIALS BY D Stock List</h2>
+          <span id="totalItemsCount" class="bg-indigo-950 text-indigo-400 text-xs px-2.5 py-1 rounded-full font-semibold border border-indigo-800">0 Items</span>
+        </div>
+
+        <div class="relative w-full sm:w-64">
+          <i data-lucide="search" class="w-4 h-4 absolute left-3 top-3 text-slate-400"></i>
+          <input type="text" id="searchInput" oninput="renderTable()" placeholder="Search fabric, barcode..." class="w-full bg-slate-900 border border-slate-700 rounded-lg pl-9 pr-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-indigo-500">
+        </div>
+      </div>
+
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-sm">
+          <thead class="bg-slate-900/60 text-slate-400 text-xs uppercase tracking-wider border-b border-slate-700">
+            <tr>
+              <th class="p-4">Barcode / ID</th>
+              <th class="p-4">Item Name / Fabric</th>
+              <th class="p-4">Category</th>
+              <th class="p-4 text-center">Stock / Yards</th>
+              <th class="p-4 text-center">Min Alert Level</th>
+              <th class="p-4 text-center">Quick Action</th>
+              <th class="p-4 text-right">Edit & Print</th>
+            </tr>
+          </thead>
+          <tbody id="inventoryTableBody" class="divide-y divide-slate-700">
+            <!-- Dynamic Data Injected Here -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Activity Scan Log -->
+    <div class="bg-slate-800 border border-slate-700 rounded-xl p-4 space-y-3">
+      <div class="flex items-center justify-between">
+        <h3 class="font-semibold text-sm flex items-center gap-2">
+          <i data-lucide="history" class="w-4 h-4 text-indigo-400"></i> Activity Log
+        </h3>
+        <button onclick="clearLogs()" class="text-xs text-slate-400 hover:text-rose-400">Clear Logs</button>
+      </div>
+      <div id="activityLogs" class="space-y-2 max-h-40 overflow-y-auto font-mono text-xs text-slate-300">
+        <div class="p-2 bg-slate-900/50 rounded border border-slate-700/50 text-slate-400">System initialized. Waiting for scanner input...</div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- MODAL: Direct Edit / Correction -->
+  <div id="editItemModal" class="fixed inset-0 bg-black/75 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
+    <div class="bg-slate-800 border border-slate-700 rounded-2xl max-w-md w-full p-6 space-y-4">
+      <div class="flex justify-between items-center border-b border-slate-700 pb-3">
+        <h3 class="font-bold text-slate-100 flex items-center gap-2">
+          <i data-lucide="edit-3" class="w-5 h-5 text-amber-400"></i> Stock Correction / Edit
+        </h3>
+        <button onclick="closeEditItemModal()" class="text-slate-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
+      </div>
+      <form onsubmit="handleSaveEdit(event)" class="space-y-3">
+        <input type="hidden" id="editOriginalId">
+        <div>
+          <label class="text-xs font-medium text-slate-400">Barcode ID (Read Only)</label>
+          <input type="text" id="editItemCode" readonly class="w-full bg-slate-950 border border-slate-800 text-slate-400 rounded-lg p-2.5 text-sm cursor-not-allowed mt-1 font-mono">
+        </div>
+        <div>
+          <label class="text-xs font-medium text-slate-400">Fabric / Item Name</label>
+          <input type="text" id="editItemName" required class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-sm text-slate-100 focus:outline-none focus:border-indigo-500 mt-1">
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="text-xs font-medium text-amber-400">Correct Stock Quantity *</label>
+            <input type="number" id="editItemStock" required min="0" class="w-full bg-slate-900 border border-amber-500 rounded-lg p-2.5 text-sm font-bold text-amber-300 focus:outline-none mt-1">
+          </div>
+          <div>
+            <label class="text-xs font-medium text-slate-400">Min Alert Quantity</label>
+            <input type="number" id="editItemMin" required min="1" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-sm text-slate-100 focus:outline-none focus:border-indigo-500 mt-1">
+          </div>
+        </div>
+        <div class="flex gap-2 pt-2">
+          <button type="button" onclick="closeEditItemModal()" class="w-1/2 py-2.5 rounded-lg border border-slate-700 hover:bg-slate-700 text-sm font-semibold">Cancel</button>
+          <button type="submit" class="w-1/2 py-2.5 rounded-lg bg-amber-600 hover:bg-amber-500 text-slate-900 font-bold text-sm">Save Changes</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: Mobile Connection QR Code -->
+  <div id="qrModal" class="fixed inset-0 bg-black/75 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
+    <div class="bg-slate-800 border border-slate-700 rounded-2xl max-w-sm w-full p-6 text-center space-y-4">
+      <div class="flex justify-between items-center border-b border-slate-700 pb-3">
+        <h3 class="font-bold text-slate-100 flex items-center gap-2">
+          <i data-lucide="smartphone" class="w-5 h-5 text-indigo-400"></i> Mobile Link QR
+        </h3>
+        <button onclick="closeQRConnectModal()" class="text-slate-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
+      </div>
+
+      <p class="text-xs text-slate-300">Scan this code if accessing over local Wi-Fi, or copy the link below to open on your phone browser:</p>
+
+      <div class="bg-white p-4 rounded-xl inline-block border-4 border-indigo-500/20">
+        <img id="qrCodeImage" class="w-48 h-48 mx-auto" src="" alt="Mobile Sync QR Code" />
+      </div>
+
+      <div class="bg-slate-900 p-3 rounded-lg text-xs font-mono text-indigo-300 break-all text-left">
+        <span class="text-slate-500 block text-[10px]">CURRENT URL:</span>
+        <span id="mobileSyncLink">Generating...</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: Add New Item -->
+  <div id="addItemModal" class="fixed inset-0 bg-black/75 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
+    <div class="bg-slate-800 border border-slate-700 rounded-2xl max-w-md w-full p-6 space-y-4">
+      <div class="flex justify-between items-center border-b border-slate-700 pb-3">
+        <h3 class="font-bold text-slate-100">Add New Fabric Roll / Item</h3>
+        <button onclick="closeAddItemModal()" class="text-slate-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
+      </div>
+      <form onsubmit="handleAddItem(event)" class="space-y-3">
+        <div>
+          <label class="text-xs font-medium text-slate-400">Item Barcode (Leave empty for auto-generate)</label>
+          <input type="text" id="newItemCode" placeholder="e.g. EBD-10029" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-sm text-slate-100 focus:outline-none focus:border-indigo-500 mt-1">
+        </div>
+        <div>
+          <label class="text-xs font-medium text-slate-400">Fabric / Item Name *</label>
+          <input type="text" id="newItemName" required placeholder="e.g. Cotton Lawn Blue 54 Inch" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-sm text-slate-100 focus:outline-none focus:border-indigo-500 mt-1">
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="text-xs font-medium text-slate-400">Category</label>
+            <input type="text" id="newItemCat" placeholder="e.g. Summer Lawn" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-sm text-slate-100 focus:outline-none focus:border-indigo-500 mt-1">
+          </div>
+          <div>
+            <label class="text-xs font-medium text-slate-400">Initial Stock (Yards/Pcs)</label>
+            <input type="number" id="newItemStock" required min="0" value="50" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-sm text-slate-100 focus:outline-none focus:border-indigo-500 mt-1">
+          </div>
+        </div>
+        <div>
+          <label class="text-xs font-medium text-slate-400">Low Stock Alert Quantity</label>
+          <input type="number" id="newItemMin" required min="1" value="10" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-sm text-slate-100 focus:outline-none focus:border-indigo-500 mt-1">
+        </div>
+        <div class="flex gap-2 pt-2">
+          <button type="button" onclick="closeAddItemModal()" class="w-1/2 py-2.5 rounded-lg border border-slate-700 hover:bg-slate-700 text-sm font-semibold">Cancel</button>
+          <button type="submit" class="w-1/2 py-2.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold">Save Item</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: Barcode Print Studio -->
+  <div id="printStudioModal" class="fixed inset-0 bg-black/75 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
+    <div class="bg-slate-800 border border-slate-700 rounded-2xl max-w-2xl w-full p-6 space-y-4">
+      <div class="flex justify-between items-center border-b border-slate-700 pb-3">
+        <h3 class="font-bold text-slate-100 flex items-center gap-2">
+          <i data-lucide="printer" class="w-5 h-5 text-indigo-400"></i> Barcode Label Studio
+        </h3>
+        <button onclick="closePrintStudioModal()" class="text-slate-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label class="text-xs font-medium text-slate-400">Select Item</label>
+          <select id="printItemSelect" onchange="updatePrintPreview()" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-sm text-slate-100 focus:outline-none focus:border-indigo-500 mt-1">
+            <!-- Dynamic Options -->
+          </select>
+        </div>
+        <div>
+          <label class="text-xs font-medium text-slate-400">Number of Labels</label>
+          <input type="number" id="printCopies" min="1" max="100" value="10" onchange="updatePrintPreview()" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-sm text-slate-100 focus:outline-none focus:border-indigo-500 mt-1">
+        </div>
+      </div>
+
+      <!-- Preview Box -->
+      <div class="bg-slate-900 p-4 rounded-xl border border-slate-700 text-center">
+        <span class="text-xs text-slate-400 block mb-2">Sticker Preview</span>
+        <div id="printPreviewContainer" class="bg-white text-black p-3 rounded shadow-md inline-block text-center">
+          <div id="previewItemName" class="font-bold text-xs">Sample Fabric</div>
+          <svg id="barcodePreview"></svg>
+        </div>
+      </div>
+
+      <div class="flex gap-3">
+        <button onclick="closePrintStudioModal()" class="w-1/2 py-2.5 rounded-lg border border-slate-700 hover:bg-slate-700 text-sm font-semibold">Close</button>
+        <button onclick="triggerPrint()" class="w-1/2 py-2.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold flex items-center justify-center gap-2">
+          <i data-lucide="printer" class="w-4 h-4"></i> Print Labels Now
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Printable Area -->
+  <div id="printArea" class="hidden"></div>
+
+  <!-- JavaScript Logic -->
+  <script>
+    const initialInventory = [
+      { id: "EBD-1001", name: "Premium Cotton Lawn Blue 54\"", category: "Summer Lawn", stock: 120, min: 20 },
+      { id: "EBD-1002", name: "Wash & Wear Charcoal Black", category: "Men Gents", stock: 15, min: 25 },
+      { id: "EBD-1003", name: "Embroidered Silk Chiffon Red", category: "Fancy Party", stock: 65, min: 10 },
+      { id: "EBD-1004", name: "Boski 8kg Soft Finish White", category: "Men Gents", stock: 8, min: 12 }
+    ];
+
+    let inventory = JSON.parse(localStorage.getItem('master_inventory')) || initialInventory;
+    let scanMode = 'cut';
+    let scannerInstance = null;
+
+    document.addEventListener("DOMContentLoaded", () => {
+      lucide.createIcons();
+      saveAndRender();
+      setupHardwareScanner();
+      
+      window.addEventListener('storage', (e) => {
+        if (e.key === 'master_inventory') {
+          inventory = JSON.parse(e.newValue) || initialInventory;
+          renderTable();
+          logActivity(`🔄 Stock synchronized from another session`, 'indigo');
+        }
+      });
+    });
+
+    function saveAndRender() {
+      localStorage.setItem('master_inventory', JSON.stringify(inventory));
+      renderTable();
+    }
+
+    function setScanMode(mode) {
+      scanMode = mode;
+      const btnCut = document.getElementById('modeCut');
+      const btnAdd = document.getElementById('modeAdd');
+
+      if (mode === 'cut') {
+        btnCut.className = "flex items-center justify-center gap-2 py-2.5 px-3 rounded-lg font-bold text-sm bg-rose-600 text-white shadow-lg transition";
+        btnAdd.className = "flex items-center justify-center gap-2 py-2.5 px-3 rounded-lg font-bold text-sm bg-slate-700 text-slate-300 hover:bg-slate-600 transition";
+      } else {
+        btnAdd.className = "flex items-center justify-center gap-2 py-2.5 px-3 rounded-lg font-bold text-sm bg-emerald-600 text-white shadow-lg transition";
+        btnCut.className = "flex items-center justify-center gap-2 py-2.5 px-3 rounded-lg font-bold text-sm bg-slate-700 text-slate-300 hover:bg-slate-600 transition";
+      }
+    }
+
+    function setupHardwareScanner() {
+      let barcodeBuffer = "";
+      let lastKeyTime = Date.now();
+
+      document.addEventListener("keydown", (e) => {
+        if (["INPUT", "SELECT", "TEXTAREA"].includes(document.activeElement.tagName)) return;
+
+        const currentTime = Date.now();
+        if (currentTime - lastKeyTime > 100) {
+          barcodeBuffer = "";
+        }
+        lastKeyTime = currentTime;
+
+        if (e.key === "Enter") {
+          if (barcodeBuffer.length > 2) {
+            processScannedBarcode(barcodeBuffer.trim());
+            barcodeBuffer = "";
+          }
+        } else if (e.key.length === 1) {
+          barcodeBuffer += e.key;
+        }
+      });
+    }
+
+    function processScannedBarcode(code) {
+      const item = inventory.find(i => i.id.toLowerCase() === code.toLowerCase());
+      if (item) {
+        if (scanMode === 'cut') {
+          if (item.stock > 0) {
+            item.stock -= 1;
+            logActivity(`✂️ Master Cut: 1 yard/pc deducted from [${item.name}] (Remaining: ${item.stock})`, 'rose');
+          } else {
+            logActivity(`⚠️ ALERT: Out of stock! Cannot cut [${item.name}]`, 'rose');
+          }
+        } else {
+          item.stock += 1;
+          logActivity(`➕ Restock: 1 yard/pc added to [${item.name}] (Total: ${item.stock})`, 'emerald');
+        }
+        saveAndRender();
+      } else {
+        logActivity(`❌ Unknown Barcode Scanned: "${code}"`, 'amber');
+      }
+    }
+
+    function renderTable() {
+      const tbody = document.getElementById('inventoryTableBody');
+      const search = document.getElementById('searchInput').value.toLowerCase();
+      tbody.innerHTML = '';
+
+      const filtered = inventory.filter(i => 
+        i.name.toLowerCase().includes(search) || 
+        i.id.toLowerCase().includes(search) ||
+        i.category.toLowerCase().includes(search)
+      );
+
+      document.getElementById('totalItemsCount').innerText = `${filtered.length} Items`;
+
+      filtered.forEach(item => {
+        const isLowStock = item.stock <= item.min;
+        const tr = document.createElement('tr');
+        tr.className = "hover:bg-slate-700/40 transition";
+        tr.innerHTML = `
+          <td class="p-4 font-mono text-xs text-indigo-300 font-bold">${item.id}</td>
+          <td class="p-4 font-medium">${item.name}</td>
+          <td class="p-4 text-xs text-slate-400">${item.category}</td>
+          <td class="p-4 text-center font-bold font-mono text-base ${isLowStock ? 'text-rose-400' : 'text-slate-100'}">
+            ${item.stock}
+            ${isLowStock ? '<span class="inline-block w-2 h-2 rounded-full bg-rose-500 ml-1 animate-ping"></span>' : ''}
+          </td>
+          <td class="p-4 text-center text-xs text-slate-400">${item.min}</td>
+          <td class="p-4 text-center">
+            <div class="inline-flex gap-1">
+              <button onclick="manualAdjust('${item.id}', -1)" class="px-2 py-1 bg-slate-700 hover:bg-rose-600 rounded text-xs font-bold transition">-1</button>
+              <button onclick="manualAdjust('${item.id}', 1)" class="px-2 py-1 bg-slate-700 hover:bg-emerald-600 rounded text-xs font-bold transition">+1</button>
+            </div>
+          </td>
+          <td class="p-4 text-right">
+            <div class="flex items-center justify-end gap-2">
+              <button onclick="openEditItemModal('${item.id}')" class="p-1.5 bg-slate-700 hover:bg-amber-600 rounded text-amber-300 hover:text-white transition" title="Correct / Edit Stock">
+                <i data-lucide="edit-3" class="w-4 h-4"></i>
+              </button>
+              <button onclick="openPrintSingleModal('${item.id}')" class="p-1.5 bg-slate-700 hover:bg-indigo-600 rounded text-slate-300 transition" title="Print Barcode">
+                <i data-lucide="barcode" class="w-4 h-4"></i>
+              </button>
+            </div>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+      lucide.createIcons();
+    }
+
+    function manualAdjust(id, delta) {
+      const item = inventory.find(i => i.id === id);
+      if (item) {
+        if (delta < 0 && item.stock <= 0) return;
+        item.stock += delta;
+        logActivity(`Manual Update: [${item.name}] stock set to ${item.stock}`, 'indigo');
+        saveAndRender();
+      }
+    }
+
+    function openEditItemModal(itemId) {
+      const item = inventory.find(i => i.id === itemId);
+      if (!item) return;
+
+      document.getElementById('editOriginalId').value = item.id;
+      document.getElementById('editItemCode').value = item.id;
+      document.getElementById('editItemName').value = item.name;
+      document.getElementById('editItemStock').value = item.stock;
+      document.getElementById('editItemMin').value = item.min;
+
+      document.getElementById('editItemModal').classList.remove('hidden');
+      document.getElementById('editItemModal').classList.add('flex');
+    }
+
+    function closeEditItemModal() {
+      document.getElementById('editItemModal').classList.add('hidden');
+    }
+
+    function handleSaveEdit(e) {
+      e.preventDefault();
+      const itemId = document.getElementById('editOriginalId').value;
+      const item = inventory.find(i => i.id === itemId);
+
+      if (item) {
+        const oldStock = item.stock;
+        item.name = document.getElementById('editItemName').value.trim();
+        item.stock = parseInt(document.getElementById('editItemStock').value) || 0;
+        item.min = parseInt(document.getElementById('editItemMin').value) || 5;
+
+        logActivity(`✏️ Manual Correction: [${item.name}] stock changed from ${oldStock} to ${item.stock}`, 'amber');
+        saveAndRender();
+        closeEditItemModal();
+      }
+    }
+
+    function logActivity(msg, color) {
+      const logs = document.getElementById('activityLogs');
+      const div = document.createElement('div');
+      const time = new Date().toLocaleTimeString();
+      div.className = `p-2 bg-slate-900/80 rounded border-l-2 border-${color}-500 text-slate-200`;
+      div.innerHTML = `<span class="text-slate-500">[${time}]</span> ${msg}`;
+      logs.prepend(div);
+    }
+
+    function clearLogs() {
+      document.getElementById('activityLogs').innerHTML = '';
+    }
+
+    function openAddItemModal() { document.getElementById('addItemModal').classList.remove('hidden'); document.getElementById('addItemModal').classList.add('flex'); }
+    function closeAddItemModal() { document.getElementById('addItemModal').classList.add('hidden'); }
+
+    function handleAddItem(e) {
+      e.preventDefault();
+      const code = document.getElementById('newItemCode').value.trim() || `EBD-${Math.floor(1000 + Math.random() * 9000)}`;
+      const name = document.getElementById('newItemName').value.trim();
+      const cat = document.getElementById('newItemCat').value.trim() || 'General';
+      const stock = parseInt(document.getElementById('newItemStock').value) || 0;
+      const min = parseInt(document.getElementById('newItemMin').value) || 5;
+
+      inventory.push({ id: code, name, category: cat, stock, min });
+      saveAndRender();
+      closeAddItemModal();
+      logActivity(`New Item Registered: [${name}] (${code})`, 'emerald');
+    }
+
+    function openPrintStudioModal() {
+      const select = document.getElementById('printItemSelect');
+      select.innerHTML = '';
+      inventory.forEach(item => {
+        const opt = document.createElement('option');
+        opt.value = item.id;
+        opt.innerText = `${item.name} (${item.id})`;
+        select.appendChild(opt);
+      });
+      document.getElementById('printStudioModal').classList.remove('hidden');
+      document.getElementById('printStudioModal').classList.add('flex');
+      updatePrintPreview();
+    }
+
+    function openPrintSingleModal(itemId) {
+      openPrintStudioModal();
+      document.getElementById('printItemSelect').value = itemId;
+      updatePrintPreview();
+    }
+
+    function closePrintStudioModal() { document.getElementById('printStudioModal').classList.add('hidden'); }
+
+    function updatePrintPreview() {
+      const id = document.getElementById('printItemSelect').value;
+      const item = inventory.find(i => i.id === id);
+      if (!item) return;
+
+      document.getElementById('previewItemName').innerText = item.name;
+      JsBarcode("#barcodePreview", item.id, {
+        format: "CODE128",
+        width: 1.8,
+        height: 45,
+        displayValue: true,
+        fontSize: 12
+      });
+    }
+
+    function triggerPrint() {
+      const id = document.getElementById('printItemSelect').value;
+      const copies = parseInt(document.getElementById('printCopies').value) || 1;
+      const item = inventory.find(i => i.id === id);
+      if (!item) return;
+
+      const printArea = document.getElementById('printArea');
+      printArea.innerHTML = '';
+
+      const container = document.createElement('div');
+      container.className = "grid grid-cols-3 gap-4 p-4";
+
+      for (let i = 0; i < copies; i++) {
+        const sticker = document.createElement('div');
+        sticker.className = "border border-black p-2 text-center text-black font-sans";
+        sticker.innerHTML = `
+          <div style="font-size: 10px; font-weight: bold; margin-bottom: 2px;">${item.name}</div>
+          <svg id="barcode-print-${i}"></svg>
+        `;
+        container.appendChild(sticker);
+      }
+      printArea.appendChild(container);
+
+      setTimeout(() => {
+        for (let i = 0; i < copies; i++) {
+          JsBarcode(`#barcode-print-${i}`, item.id, {
+            format: "CODE128",
+            width: 1.5,
+            height: 40,
+            displayValue: true,
+            fontSize: 10
+          });
+        }
+        window.print();
+      }, 200);
+    }
+
+    function toggleCameraScanner() {
+      const card = document.getElementById('cameraScannerCard');
+      if (card.classList.contains('hidden')) {
+        card.classList.remove('hidden');
+        scannerInstance = new Html5QrcodeScanner("interactiveScanner", { fps: 10, qrbox: 250 });
+        scannerInstance.render((decodedText) => {
+          processScannedBarcode(decodedText);
+        });
+      } else {
+        card.classList.add('hidden');
+        if (scannerInstance) scannerInstance.clear();
+      }
+    }
+
+    function exportCSV() {
+      let csv = "Barcode ID,Item Name,Category,Current Stock,Min Alert Level\n";
+      inventory.forEach(i => {
+        csv += `"${i.id}","${i.name}","${i.category}",${i.stock},${i.min}\n`;
+      });
+      const blob = new Blob([csv], { type: 'text/csv'});
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `inventory_export_${new Date().toISOString().slice(0,10)}.csv`;
+      a.click();
+    }
+
+    function openQRConnectModal() {
+      const currentUrl = window.location.href;
+      document.getElementById('mobileSyncLink').innerText = currentUrl;
+      const qrApi = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(currentUrl)}`;
+      document.getElementById('qrCodeImage').src = qrApi;
+      
+      document.getElementById('qrModal').classList.remove('hidden');
+      document.getElementById('qrModal').classList.add('flex');
+    }
+    function closeQRConnectModal() {
+      document.getElementById('qrModal').classList.add('hidden');
+    }
+  </script>
+</body>
+</html>
