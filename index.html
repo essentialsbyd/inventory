@@ -6,7 +6,7 @@
     <title>Master Cutter Entry - Essentials By D</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- ZXing Barcode Scanner Library (Laptop & Mobile Compatible) -->
+    <!-- ZXing Barcode Scanner Library -->
     <script type="text/javascript" src="https://unpkg.com/@zxing/library@0.19.1"></script>
 </head>
 <body class="bg-slate-950 text-white min-h-screen flex flex-col justify-between items-center p-4 font-sans select-none">
@@ -14,27 +14,29 @@
     <!-- App Header -->
     <header class="w-full text-center py-4 border-b border-slate-800">
         <h1 class="text-xl font-black tracking-widest text-amber-400">ESSENTIALS BY D</h1>
-        <p class="text-xs text-slate-400 font-medium mt-0.5">Master Cutter Quick Entry Panel (Laptop & Mobile)</p>
+        <p class="text-xs text-slate-400 font-medium mt-0.5">Master Cutter Quick Entry Panel</p>
     </header>
 
     <!-- Main Container -->
     <main class="w-full max-w-sm my-auto flex flex-col items-center">
         
-        <!-- START SCREEN (Button to Open Camera) -->
-        <div id="start-screen" class="w-full bg-slate-900/90 p-6 rounded-3xl border border-slate-800 shadow-2xl text-center space-y-4 backdrop-blur-md">
-            <div class="w-16 h-16 bg-amber-500/10 text-amber-400 rounded-2xl mx-auto flex items-center justify-center text-3xl border border-amber-500/20">
-                📷
+        <!-- MOBILE SCANNER START SCREEN -->
+        <div id="mobile-view" class="w-full space-y-4">
+            <div class="w-full bg-slate-900/90 p-6 rounded-3xl border border-slate-800 shadow-2xl text-center space-y-4 backdrop-blur-md">
+                <div class="w-16 h-16 bg-amber-500/10 text-amber-400 rounded-2xl mx-auto flex items-center justify-center text-3xl border border-amber-500/20">
+                    📱
+                </div>
+                <div>
+                    <h2 class="text-lg font-bold text-white">Mobile Scanner Mode</h2>
+                    <p class="text-xs text-slate-400 mt-1">Barcode scan karne ke liye button dabayein</p>
+                </div>
+                <button onclick="startScanning()" class="w-full bg-amber-500 hover:bg-amber-600 active:scale-95 text-slate-950 font-black py-4 rounded-2xl shadow-xl transition text-base tracking-wide flex items-center justify-center gap-2">
+                    <span>⚡</span> <span>OPEN CAMERA & SCAN</span>
+                </button>
             </div>
-            <div>
-                <h2 class="text-lg font-bold text-white">Fabric Scanning Ready</h2>
-                <p class="text-xs text-slate-400 mt-1">Camera on karne ke liye button dabayein</p>
-            </div>
-            <button onclick="startScanning()" class="w-full bg-amber-500 hover:bg-amber-600 active:scale-95 text-slate-950 font-black py-4 rounded-2xl shadow-xl transition text-base tracking-wide flex items-center justify-center gap-2">
-                <span>⚡</span> <span>OPEN CAMERA & SCAN</span>
-            </button>
         </div>
 
-        <!-- SCANNER BOX (Hidden initially) -->
+        <!-- SCANNER BOX (Hidden initially, opens on mobile button click) -->
         <div id="scanner-container" class="w-full bg-slate-900/90 p-4 rounded-3xl border border-slate-800 shadow-2xl backdrop-blur-md hidden">
             <div class="flex items-center justify-between mb-3 px-1">
                 <span class="text-xs font-semibold text-amber-400 uppercase tracking-wider">📷 Scanner Active</span>
@@ -43,33 +45,48 @@
                 </button>
             </div>
             
-            <!-- Video Preview Box -->
             <div class="w-full overflow-hidden rounded-2xl bg-black border border-slate-800 relative min-h-[260px] flex items-center justify-center">
                 <video id="video" class="w-full h-full object-cover rounded-2xl"></video>
             </div>
             
             <p class="text-[11px] text-slate-400 text-center mt-3 font-medium">
-                Barcode ko camera ke samne rakhein
+                Fabric Barcode ko camera ke samne rakhein
             </p>
+        </div>
+
+        <!-- PC / LAPTOP DATA ENTRY VIEW (Appears on PC automatically) -->
+        <div id="pc-view" class="w-full bg-slate-900/90 p-6 rounded-3xl border border-slate-800 shadow-2xl text-center space-y-4 backdrop-blur-md hidden">
+            <div class="w-16 h-16 bg-blue-500/10 text-blue-400 rounded-2xl mx-auto flex items-center justify-center text-3xl border border-blue-500/20">
+                💻
+            </div>
+            <div>
+                <h2 class="text-lg font-bold text-white">PC Management Panel</h2>
+                <p class="text-xs text-slate-400 mt-1">Aap PC par hain. Barcode scanning sirf mobile par hoti hai.</p>
+            </div>
+            <div class="p-3 bg-slate-950 rounded-2xl border border-slate-800 text-left space-y-2">
+                <label class="block text-[11px] font-medium text-slate-400">Manual Fabric Code (PC Entry):</label>
+                <input type="text" id="pc-code-input" placeholder="Enter Code e.g. FAB-101" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white outline-none focus:border-amber-400">
+                <button onclick="submitPCEntry()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 rounded-xl text-xs transition">
+                    Proceed to Cut Entry
+                </button>
+            </div>
         </div>
 
     </main>
 
     <!-- Quick Footer -->
     <footer class="w-full text-center py-2 text-[10px] text-slate-600">
-        Universal Scanner Mode • Laptop & Mobile Ready
+        Essentials By D • Smart Inventory System
     </footer>
 
     <!-- POPUP MODAL (CUT ONLY) -->
     <div id="cut-popup" class="fixed inset-0 bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-4 hidden z-50 transition-all">
         <div class="bg-slate-900 border border-slate-700/80 rounded-3xl p-6 w-full max-w-xs shadow-2xl relative">
             
-            <!-- Close Button -->
             <button onclick="closePopup()" class="absolute top-4 right-4 text-slate-400 hover:text-white bg-slate-800 rounded-full w-8 h-8 flex items-center justify-center text-sm">
                 ✕
             </button>
 
-            <!-- Scanned Code Header -->
             <div class="text-center mb-5 mt-2">
                 <span class="bg-amber-500/10 text-amber-400 border border-amber-500/20 text-[11px] px-3 py-1 rounded-full font-mono font-bold tracking-wider uppercase inline-block mb-2" id="popup-barcode">
                     CODE: ---
@@ -77,7 +94,6 @@
                 <h3 class="text-base font-bold text-white" id="popup-title">Fabric Scanned</h3>
             </div>
 
-            <!-- Meter Entry Section -->
             <div class="space-y-4">
                 <div>
                     <label class="block text-xs font-medium text-slate-300 mb-1.5 text-center">
@@ -94,7 +110,6 @@
                     </div>
                 </div>
 
-                <!-- Single Cut Action Button -->
                 <div class="pt-2">
                     <button onclick="submitCut()" class="w-full bg-rose-600 hover:bg-rose-700 active:scale-95 text-white font-bold py-3.5 rounded-2xl shadow-lg transition flex items-center justify-center gap-2 text-base">
                         <span>✂️</span> <span>CONFIRM CUT</span>
@@ -110,8 +125,21 @@
         let lastScannedCode = "";
         let isScanningActive = false;
 
+        // Detect if device is Mobile or PC
+        window.addEventListener('DOMContentLoaded', () => {
+            const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+            
+            if (isMobile) {
+                document.getElementById('mobile-view').classList.remove('hidden');
+                document.getElementById('pc-view').classList.add('hidden');
+            } else {
+                document.getElementById('mobile-view').classList.add('hidden');
+                document.getElementById('pc-view').classList.remove('hidden');
+            }
+        });
+
         async function startScanning() {
-            document.getElementById('start-screen').classList.add('hidden');
+            document.getElementById('mobile-view').classList.add('hidden');
             document.getElementById('scanner-container').classList.remove('hidden');
 
             if (!codeReader) {
@@ -128,7 +156,7 @@
                     return;
                 }
 
-                // Automatically pick the right camera (Back camera for phones, Webcam for laptops)
+                // Pick back camera for mobile
                 let selectedDeviceId = videoInputDevices[0].deviceId;
                 for (const device of videoInputDevices) {
                     const name = device.label.toLowerCase();
@@ -148,7 +176,7 @@
                 });
             } catch (err) {
                 console.error("Camera error:", err);
-                alert("Camera ki permission deni lazmi hai!");
+                alert("Camera ki permission allow karein!");
                 stopScanning();
             }
         }
@@ -163,7 +191,10 @@
 
         function closePopup() {
             document.getElementById('cut-popup').classList.add('hidden');
-            isScanningActive = true; 
+            const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+            if (isMobile) {
+                isScanningActive = true;
+            }
         }
 
         function stopScanning() {
@@ -172,7 +203,20 @@
             }
             isScanningActive = false;
             document.getElementById('scanner-container').classList.add('hidden');
-            document.getElementById('start-screen').classList.remove('hidden');
+            document.getElementById('mobile-view').classList.remove('hidden');
+        }
+
+        function submitPCEntry() {
+            const code = document.getElementById('pc-code-input').value.trim();
+            if (!code) {
+                alert("Please fabric code enter karein!");
+                return;
+            }
+            lastScannedCode = code;
+            document.getElementById('popup-barcode').innerText = "CODE: " + code;
+            document.getElementById('popup-title').innerText = "Fabric Code #" + code;
+            document.getElementById('meters-input').value = '';
+            document.getElementById('cut-popup').classList.remove('hidden');
         }
 
         function submitCut() {
