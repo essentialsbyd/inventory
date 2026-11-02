@@ -52,10 +52,10 @@
 
     <!-- Quick Footer -->
     <footer class="w-full text-center py-2 text-[10px] text-slate-600">
-        Mobile Scanner Mode • Fixed Auto-Popup Bug
+        Mobile Scanner Mode • Cut Only Panel
     </footer>
 
-    <!-- POPUP MODAL -->
+    <!-- POPUP MODAL (CUT ONLY) -->
     <div id="cut-popup" class="fixed inset-0 bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-4 hidden z-50 transition-all">
         <div class="bg-slate-900 border border-slate-700/80 rounded-3xl p-6 w-full max-w-xs shadow-2xl relative">
             
@@ -76,7 +76,7 @@
             <div class="space-y-4">
                 <div>
                     <label class="block text-xs font-medium text-slate-300 mb-1.5 text-center">
-                        Kitne Meter Cut/Use Kiya?
+                        Kitne Meter Cut Kiya?
                     </label>
                     <div class="relative">
                         <input type="number" 
@@ -89,13 +89,10 @@
                     </div>
                 </div>
 
-                <!-- Action Buttons -->
-                <div class="grid grid-cols-2 gap-3 pt-2">
-                    <button onclick="submitAction('CUT')" class="w-full bg-rose-600 hover:bg-rose-700 active:scale-95 text-white font-bold py-3.5 rounded-2xl shadow-lg transition flex items-center justify-center gap-1">
-                        <span>✂️</span> <span>CUT</span>
-                    </button>
-                    <button onclick="submitAction('ADD')" class="w-full bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-bold py-3.5 rounded-2xl shadow-lg transition flex items-center justify-center gap-1">
-                        <span>➕</span> <span>ADD</span>
+                <!-- Single Cut Action Button -->
+                <div class="pt-2">
+                    <button onclick="submitCut()" class="w-full bg-rose-600 hover:bg-rose-700 active:scale-95 text-white font-bold py-3.5 rounded-2xl shadow-lg transition flex items-center justify-center gap-2 text-base">
+                        <span>✂️</span> <span>CONFIRM CUT</span>
                     </button>
                 </div>
             </div>
@@ -109,7 +106,6 @@
         let lastScannedCode = "";
 
         function onScanSuccess(decodedText, decodedResult) {
-            // Safety check: ignore empty or invalid triggers on load
             if (!decodedText || decodedText.trim() === "") return;
             
             lastScannedCode = decodedText;
@@ -132,47 +128,6 @@
             }
         }
 
-        function submitAction(type) {
+        function submitCut() {
             const meters = document.getElementById('meters-input').value;
-            if (!meters || meters <= 0) {
-                alert("Please meter enter karein!");
-                return;
-            }
-
-            alert(`✅ Record Saved!\n\nFabric Code: ${lastScannedCode}\nAction: ${type}\nMeters: ${meters}m`);
-            closePopup();
-        }
-
-        function startScanner() {
-            html5QrCode = new Html5Qrcode("reader");
-            const config = { fps: 15, qrbox: { width: 200, height: 200 } };
-            
-            html5QrCode.start(
-                { facingMode: currentFacingMode }, 
-                config, 
-                onScanSuccess
-            ).catch(err => {
-                console.error("Camera start error", err);
-                html5QrCode.start({ facingMode: "user" }, config, onScanSuccess);
-            });
-        }
-
-        function switchCamera() {
-            if (!html5QrCode) return;
-            
-            html5QrCode.stop().then(() => {
-                currentFacingMode = (currentFacingMode === "environment") ? "user" : "environment";
-                startScanner();
-            }).catch(err => {
-                console.error("Failed to clear scanner. ", err);
-            });
-        }
-
-        // Initialize and ensure popup starts hidden
-        window.addEventListener('DOMContentLoaded', () => {
-            document.getElementById('cut-popup').classList.add('hidden');
-            startScanner();
-        });
-    </script>
-</body>
-</html>
+            if (!meters || meters <= 0
