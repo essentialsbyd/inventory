@@ -1,118 +1,273 @@
-<!DOCTYPE html>
-<html lang="ur">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Essentials By D - Master Fabric Inventory</title>
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- ZXing Barcode Scanner Library -->
-    <script type="text/javascript" src="https://unpkg.com/@zxing/library@0.19.1"></script>
-    <style>
-        .custom-scrollbar::-webkit-scrollbar { height: 6px; width: 6px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: #0f172a; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
-    </style>
-</head>
-<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col justify-between font-sans select-none antialiased">
 
-    <!-- Top Navigation Header -->
-    <header class="w-full bg-slate-900/90 border-b border-slate-800/80 px-4 md:px-8 py-3.5 sticky top-0 z-40 backdrop-blur-md flex items-center justify-between">
-        <div class="flex items-center gap-3">
-            <div class="w-10 h-10 bg-amber-500/10 border border-amber-500/20 rounded-xl flex items-center justify-center text-amber-400 font-black text-lg">
-                D
-            </div>
-            <div>
-                <h1 class="text-base md:text-lg font-black tracking-wider text-amber-400 uppercase">Essentials By D</h1>
-                <p class="text-[10px] md:text-xs text-slate-400 font-medium">Master Cutter Inventory & Barcode Tracking</p>
-            </div>
-        </div>
-        
-        <div class="flex items-center gap-2">
-            <!-- Main Scan Trigger -->
-            <button onclick="openScannerModal()" class="bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 font-black px-4 py-2.5 rounded-xl text-xs flex items-center gap-2 shadow-lg shadow-amber-500/10 active:scale-95 transition">
-                <span class="text-base">📷</span> <span class="hidden sm:inline">SCAN FABRIC</span><span>BARCODE</span>
-            </button>
-        </div>
-    </header>
-
-    <!-- Main Container -->
-    <main class="w-full max-w-7xl mx-auto p-4 md:p-6 space-y-6 flex-grow">
-        
-        <!-- Summary Cards -->
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
-            <div class="bg-slate-900/70 border border-slate-800 p-4 rounded-2xl shadow-lg backdrop-blur-sm">
-                <p class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Total Items</p>
-                <h3 class="text-xl md:text-2xl font-black text-white mt-1" id="stat-total-items">0</h3>
-            </div>
-            <div class="bg-slate-900/70 border border-slate-800 p-4 rounded-2xl shadow-lg backdrop-blur-sm">
-                <p class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Initial Stock</p>
-                <h3 class="text-xl md:text-2xl font-black text-amber-400 mt-1" id="stat-total-stock">0.0m</h3>
-            </div>
-            <div class="bg-slate-900/70 border border-slate-800 p-4 rounded-2xl shadow-lg backdrop-blur-sm">
-                <p class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Used / Cut Meters</p>
-                <h3 class="text-xl md:text-2xl font-black text-rose-400 mt-1" id="stat-used-meters">0.0m</h3>
-            </div>
-            <div class="bg-slate-900/70 border border-slate-800 p-4 rounded-2xl shadow-lg backdrop-blur-sm">
-                <p class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Remaining Stock</p>
-                <h3 class="text-xl md:text-2xl font-black text-emerald-400 mt-1" id="stat-remaining-stock">0.0m</h3>
-            </div>
-        </div>
-
-        <!-- Inventory Master Table Card -->
-        <div class="bg-slate-900/80 border border-slate-800/80 rounded-3xl shadow-2xl overflow-hidden backdrop-blur-md">
-            <div class="p-4 md:p-5 border-b border-slate-800/80 flex flex-col md:flex-row md:items-center justify-between gap-3">
-                <div>
-                    <h2 class="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
-                        <span>📊</span> Fabric Stock Ledger
-                    </h2>
-                    <p class="text-xs text-slate-400 mt-0.5">Live remaining stock, barcodes, and deduction history</p>
-                </div>
-                
-                <!-- Search Input -->
-                <div class="relative w-full md:w-64">
-                    <input type="text" id="search-input" onkeyup="filterInventory()" placeholder="Search Code, Barcode or Name..." class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2 text-xs text-white outline-none focus:border-amber-400/80 transition">
-                </div>
-            </div>
-
-            <!-- Table with dedicated BARCODE Column -->
-            <div class="overflow-x-auto custom-scrollbar">
-                <table class="w-full text-left border-collapse text-xs">
-                    <thead>
-                        <tr class="bg-slate-950/80 text-slate-400 uppercase text-[10px] tracking-wider border-b border-slate-800">
-                            <th class="p-3.5">Fabric Code</th>
-                            <th class="p-3.5">Barcode / Scan Code</th>
-                            <th class="p-3.5">Fabric Name</th>
-                            <th class="p-3.5 text-right">Initial Stock</th>
-                            <th class="p-3.5 text-right">Used / Cut</th>
-                            <th class="p-3.5 text-right">Remaining Stock</th>
-                            <th class="p-3.5 text-center">Action</th>
-                        </tr>
-                    </thead>
-                    <tbody id="inventory-table-body" class="divide-y divide-slate-800/50 font-medium">
-                        <!-- Dynamic Rows loaded via JS -->
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
-        <!-- Recent Cutting Log Activity with Auto Date -->
-        <div class="bg-slate-900/60 border border-slate-800/80 rounded-3xl p-5 shadow-xl">
-            <h3 class="text-xs font-bold text-slate-300 uppercase tracking-wider mb-3 flex items-center gap-2">
-                <span>✂️</span> Recent Cutting Logs (With Auto Date & Time)
-            </h3>
-            <div id="logs-container" class="space-y-2 text-xs text-slate-400">
-                <p class="text-slate-500 italic text-[11px]">Abhi tak koi cut record nahi hua.</p>
-            </div>
-        </div>
-
-    </main>
-
-    <!-- Footer -->
-    <footer class="w-full text-center py-4 border-t border-slate-800/80 text-xs text-slate-500">
-        Essentials By D • Fabric Inventory Management
-    </footer>
-
-    <!-- SCANNER MODAL -->
-    <div id="scanner-modal" class="fixed inset-0 bg-slate-950/90 backdrop-blur-md flex items-center justify-center p-4 hidden z-50">
-        <div class="
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Fabric Inventory</title>
+<style>
+:root{--bg:#eef1f5;--card:#fff;--tx:#17233a;--mu:#5d6b82;--ac:#1f3a6e;--ac2:#e9b824;--bd:#d5dbe6;--ok:#1e7a46;--bad:#b3261e;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0f1624;--card:#18223a;--tx:#e8edf7;--mu:#9aa8c2;--ac:#8fb0f0;--ac2:#e9b824;--bd:#2a3858;--ok:#4cc380;--bad:#ff8a80}}
+:root[data-theme="dark"]{--bg:#0f1624;--card:#18223a;--tx:#e8edf7;--mu:#9aa8c2;--ac:#8fb0f0;--ac2:#e9b824;--bd:#2a3858;--ok:#4cc380;--bad:#ff8a80}
+*{box-sizing:border-box}html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+header{background:var(--ac);color:#fff;padding:14px 16px;border-bottom:5px solid var(--ac2)}
+:root[data-theme="dark"] header,:root:not([data-theme="light"]) header{}
+header h1{margin:0;font-size:20px;letter-spacing:.2px}header p{margin:2px 0 0;font-size:13px;opacity:.85}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]) header{background:#22305a;color:#fff}}
+nav{display:flex;gap:4px;padding:10px 12px 0;overflow-x:auto}
+nav button{border:1px solid var(--bd);background:var(--card);color:var(--tx);padding:9px 16px;border-radius:8px 8px 0 0;font:inherit;cursor:pointer;white-space:nowrap}
+nav button.on{background:var(--ac);color:#fff;border-color:var(--ac);font-weight:600}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]) nav button.on{color:#0f1624}}
+main{padding:14px 12px 40px;max-width:1100px;margin:auto}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:14px;margin-bottom:12px}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.row>.grow{flex:1;min-width:140px}
+input,select{font:inherit;padding:9px 10px;border:1px solid var(--bd);border-radius:7px;background:var(--bg);color:var(--tx);width:100%}
+label{display:block;font-size:12.5px;color:var(--mu);margin-bottom:3px}
+button.b{font:inherit;padding:9px 14px;border-radius:7px;border:1px solid var(--ac);background:var(--ac);color:#fff;cursor:pointer;font-weight:600}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]) button.b{color:#0f1624}}
+button.g{background:transparent;color:var(--ac)}button.r{background:var(--bad);border-color:var(--bad);color:#fff}button.y{background:var(--ac2);border-color:var(--ac2);color:#222}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid var(--ac2);outline-offset:1px}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px;margin-bottom:12px}
+.stats div{background:var(--card);border:1px solid var(--bd);border-left:5px solid var(--ac2);border-radius:8px;padding:10px 12px}
+.stats b{display:block;font-size:22px}.stats span{font-size:12.5px;color:var(--mu)}
+.tw{overflow-x:auto}table{width:100%;border-collapse:collapse;min-width:640px}
+th,td{text-align:left;padding:8px 8px;border-bottom:1px solid var(--bd);vertical-align:middle}th{font-size:12.5px;color:var(--mu);font-weight:600}
+.low{color:var(--bad);font-weight:700}.tag{display:inline-block;background:var(--bad);color:#fff;font-size:11px;padding:1px 7px;border-radius:99px;margin-left:6px}
+.pos{color:var(--ok);font-weight:700}.neg{color:var(--bad);font-weight:700}
+.big{font-size:20px;padding:13px}.sw{width:14px;height:14px;border-radius:50%;display:inline-block;border:1px solid var(--bd);vertical-align:-2px;margin-right:5px}
+dialog{border:1px solid var(--bd);border-radius:12px;background:var(--card);color:var(--tx);width:min(560px,94vw);padding:16px}
+dialog::backdrop{background:rgba(0,0,0,.5)}
+.fg{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.msg{padding:10px 12px;border-radius:8px;margin-top:10px;background:var(--bg);border-left:5px solid var(--ac2)}
+video{width:100%;max-height:260px;border-radius:8px;background:#000;display:none;margin-top:10px}
+.mm header,.mm nav,.mm .fab{display:none}
+.fab{position:fixed;right:14px;bottom:calc(14px + env(safe-area-inset-bottom,0px));z-index:5;padding:14px 20px;border-radius:99px;font-size:16px;box-shadow:0 4px 14px rgba(0,0,0,.35)}
+.lbs{display:flex;flex-wrap:wrap;gap:10px}.lbp{background:#fff;color:#000;border:1px dashed #999;padding:5px;font:11px/1.2 Arial,sans-serif;overflow:hidden}
+.lbp b{display:block;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.lbp .s{text-align:center;letter-spacing:1.5px;font:11px monospace}
+#pa{display:none}
+@media print{body>*:not(#pa){display:none!important}body{background:#fff}#pa{display:block!important}
+.th .lbp{border:0;page-break-after:always;break-after:page}.a4{display:flex;flex-wrap:wrap;gap:3mm}.a4 .lbp{border:1px dashed #bbb}
+#pa table{min-width:0;font:11px Arial,sans-serif;color:#000}#pa th,#pa td{border:1px solid #888;padding:3px 5px;color:#000}}
+</style></head><body>
+<header><h1>Fabric Inventory</h1><p>Stock, barcode scan and label printing</p></header>
+<nav id="nav"></nav><div id="bn" style="padding:0 12px;max-width:1100px;margin:auto"></div><main id="app"></main><div id="toast" class="msg" style="display:none;position:fixed;left:12px;right:12px;top:calc(10px + env(safe-area-inset-top,0px));z-index:9;background:var(--ac2);color:#222;border-left-color:#222;font-weight:600"></div>
+<div id="pa"></div><style id="pg"></style>
+ 
+<dialog id="dlg"><form method="dialog" id="frm" onsubmit="return false">
+<h3 id="dt" style="margin:0 0 10px">Add fabric</h3><div class="fg" id="ff"></div>
+<div class="row" style="margin-top:14px;justify-content:flex-end"><button type="button" class="b g" onclick="dlg.close()">Cancel</button><button type="button" class="b" onclick="saveItem()">Save fabric</button></div></form></dialog>
+ 
+<dialog id="qd"><h3 style="margin:0 0 6px">Master QR code</h3>
+<p style="margin:0 0 10px;color:var(--mu);font-size:13.5px">The master scans this QR with the normal phone camera and taps the link. The cutting screen opens.</p>
+<label>Link inside the QR</label><input id="qu" value="" oninput="qrMake()">
+<div style="text-align:center;margin:12px 0"><div id="qb" style="display:inline-block;background:#fff;padding:6px;border-radius:6px"></div></div>
+<div class="row" style="justify-content:flex-end"><button type="button" class="b" onclick="qrPng()">Download PNG</button><button type="button" class="b y" onclick="qrPdf()">Download PDF to print</button><button type="button" class="b g" onclick="$('qd').close()">Close</button></div></dialog>
+<button class="b y fab" onclick="cOpen()">Scan &amp; cut</button>
+<dialog id="cd"><h3 style="margin:0 0 10px">Cut fabric</h3>
+<div class="row"><div class="grow"><input id="cc" placeholder="Barcode (scan or type)" autocomplete="off" onkeydown="if(event.key=='Enter')cFind(this.value)"></div><button type="button" class="b y" onclick="cStart()">Live camera</button><button type="button" class="b" onclick="$('cph').click()">Take photo</button><input id="cph" type="file" accept="image/*" capture="environment" hidden onchange="cPhoto(this)"></div>
+<video id="cv" playsinline muted></video><div id="cr"></div>
+<div class="row" style="justify-content:flex-end;margin-top:12px"><button type="button" class="b g" onclick="cClose()">Close</button></div></dialog>
+<script src="https://cdn.jsdelivr.net/npm/@zxing/library@0.21.3/umd/index.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script>
+/* STEP 1: paste your Firebase web app config here (see README.md) */
+const FIREBASE_CONFIG={apiKey:"PASTE_API_KEY",authDomain:"PASTE_PROJECT.firebaseapp.com",projectId:"PASTE_PROJECT_ID",appId:"PASTE_APP_ID"};
+/* STEP 2: the owner email (the one who adds/edits fabrics) */
+const OWNER_EMAIL="owner@example.com";
+</script>
+<script>
+const P="212222,222122,222221,121223,121322,131222,122213,122312,132212,221213,221312,231212,112232,122132,122231,113222,123122,123221,223211,221132,221231,213212,223112,312131,311222,321122,321221,312212,322112,322211,212123,212321,232121,111323,131123,131321,112313,132113,132311,211313,231113,231311,112133,112331,132131,113123,113321,133121,313121,211331,231131,213113,213311,213131,311123,311321,331121,312113,312311,332111,314111,221411,431111,111224,111422,121124,121421,141122,141221,112214,112412,122114,122411,142112,142211,241211,221114,413111,241112,134111,111242,121142,121241,114212,124112,124211,411212,421112,421211,212141,214121,412121,111143,111341,131141,114113,114311,411113,411311,113141,114131,311141,411131,211412,211214,211232,2331112".split(",");
+function bc(t,h){let v=[104],s=104;for(let i=0;i<t.length;i++){const c=t.charCodeAt(i)-32;v.push(c);s+=c*(i+1)}v.push(s%103,106);let x=10,r="";v.forEach(c=>{const p=P[c];for(let i=0;i<p.length;i++){const w=+p[i];if(i%2==0)r+=`<rect x="${x}" y="0" width="${w}" height="100"/>`;x+=w}});x+=10;return `<svg viewBox="0 0 ${x} 100" preserveAspectRatio="none" style="width:100%;height:${h}px;display:block" fill="#000">${r}</svg>`}
+const $=id=>document.getElementById(id),esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+let D={items:[],log:[],n:1},tab="stock",q="",sel={},scanned=null,editId=null,cs="a";
+let OLD=null;try{const x=localStorage.getItem("fabricInv1");if(x){OLD=JSON.parse(x);D.master=OLD.master||""}}catch(e){}
+function save(){try{localStorage.setItem('fabricInv1',JSON.stringify(Object.assign({},OLD||{},{master:D.master})))}catch(e){}}
+let db=null,IT=[],MV=[],canW=true,isOwn=false,ready=false;
+function derive(){const m={};MV.forEach(v=>{const a=m[v.iid]||(m[v.iid]={inn:0,used:0,last:null});if(v.d>0)a.inn+=v.d;else a.used-=v.d;if(v.k==='cut'&&(!a.last||v.ts>a.last.ts))a.last=v});
+ D.items=IT.map(i=>{const a=m[i.id]||{inn:0,used:0,last:null};return Object.assign({},i,{inn:+a.inn.toFixed(3),used:+a.used.toFixed(3),qty:+(a.inn-a.used).toFixed(3),last:a.last})}).sort((a,b)=>String(a.name).localeCompare(String(b.name)));
+ D.n=1+Math.max(0,...IT.map(i=>parseInt(String(i.sku||'').replace(/^FB/,''))||0));
+ D.log=MV.slice().sort((a,b)=>b.ts-a.ts).slice(0,500).map(v=>({t:new Date(v.ts).toLocaleString(),sku:v.sku,name:v.nm,d:v.d,u:v.u,note:v.note||'',k:v.k}))}
+function note(t){const e=$('toast');e.textContent=t;e.style.display='block';clearTimeout(note.t);note.t=setTimeout(()=>e.style.display='none',9000)}
+function bn(h){$('bn').innerHTML=h?`<div class="msg" style="margin:10px 0 0">${h}</div>`:''}
+function refresh(){derive();if(pend&&ready&&IT.length){const s=pend;pend=null;if(!$('cd').open)$('cd').showModal();$('cr').innerHTML='';cFind(s)}if(tab==='stock'){document.activeElement&&document.activeElement.id==='qs'?vStockRows():render()}else if(tab==='log')render()}
+async function importOld(){if(!OLD||!OLD.items)return;bn('Importing...');try{for(const x of OLD.items){const {qty,...f}=x;await db.collection('items').doc(x.id).set(f);if(qty>0)await addLog(x,qty,'Opening stock (imported)','open')}OLD={master:D.master};save();bn('')}catch(e){bn('Import failed. Only the owner can import fabrics.')}}
+let started=false;
+function loginUI(msg){$("app").innerHTML=`<div class="card" style="max-width:380px;margin:30px auto"><h3 style="margin-top:0">Sign in</h3><label>Email</label><input id="le" type="email" autocomplete="username"><label style="margin-top:8px">Password</label><input id="lp" type="password" autocomplete="current-password" onkeydown="if(event.key=='Enter')doLogin()"><div style="margin-top:12px"><button class="b" onclick="doLogin()">Sign in</button></div>${msg?`<p class="low">${esc(msg)}</p>`:""}</div>`}
+function doLogin(){firebase.auth().signInWithEmailAndPassword($("le").value.trim(),$("lp").value).catch(()=>loginUI("Wrong email or password"))}
+function startApp(user){if(started)return;started=true;db=firebase.firestore();isOwn=(user.email||"").toLowerCase()===OWNER_EMAIL.toLowerCase();canW=true;
+ const tm=setTimeout(()=>bn('Stock is taking long to load. Check your internet.'),10000);let f1=0;
+ db.collection('items').onSnapshot(s=>{clearTimeout(tm);IT=s.docs.map(d=>Object.assign({id:d.id},d.data()));derive();if(!f1){f1=1;if(isOwn&&OLD&&OLD.items&&OLD.items.length&&!IT.length)bn(`This browser has ${OLD.items.length} saved fabrics. <button class="b y" onclick="importOld()">Import to shared stock</button>`)}refresh()},e=>bn('Could not load stock: '+esc(e.message)));
+ db.collection('moves').onSnapshot(s=>{MV=s.docs.map(d=>d.data());derive();if(ready)s.docChanges().forEach(c=>{if(c.type==='added'&&!c.doc.metadata.hasPendingWrites){const v=c.doc.data();note((v.by||'Master')+': '+(v.d<0?'used ':'added ')+Math.abs(v.d)+' '+v.u+' - '+v.nm)}});ready=true;refresh()},e=>bn('Could not load history: '+esc(e.message)))}
+try{firebase.initializeApp(FIREBASE_CONFIG);firebase.auth().onAuthStateChanged(u=>{if(u){bn("");startApp(u)}else{started=false;loginUI()}})}catch(e){bn("Firebase is not set up yet. Fill FIREBASE_CONFIG at the top of index.html (see README.md).")}
+const DL={save:async({filename,data})=>{const b=data instanceof Blob?data:new Blob([data]);const a=document.createElement("a");a.href=URL.createObjectURL(b);a.download=filename;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),8000)}};
+const tabs={stock:"Stock",scan:"Scan in / out",labels:"Print labels",log:"History"};
+function nav(){$("nav").innerHTML=Object.entries(tabs).map(([k,v])=>`<button class="${k==tab?"on":""}" onclick="go('${k}')">${v}</button>`).join("")}
+function go(t){try{stopCam()}catch(e){}tab=t;render()}
+function render(){if(MM){vMaster();return}nav();({stock:vStock,scan:vScan,labels:vLabels,log:vLog})[tab]();if(tab=="scan")setTimeout(()=>$("sc")&&$("sc").focus(),50)}
+const money=n=>(+n||0).toLocaleString(undefined,{maximumFractionDigits:2});
+const isLow=i=>+i.qty<=+i.min;
+ 
+function vStock(){
+ const L=D.items.filter(i=>(i.name+i.sku+i.color+i.type+i.loc).toLowerCase().includes(q.toLowerCase()));
+ const val=D.items.reduce((a,i)=>a+i.qty*i.price,0);
+ $("app").innerHTML=`<div class="stats"><div><b>${D.items.length}</b><span>Fabric types</span></div><div><b>${money(D.items.reduce((a,i)=>a+ +i.qty,0))}</b><span>Total quantity</span></div><div><b>${D.items.filter(isLow).length}</b><span>Low stock</span></div><div><b>${money(val)}</b><span>Stock value</span></div></div>
+ <div class="card"><div class="row"><div class="grow"><input id="qs" placeholder="Search name, color, barcode, location" value="${esc(q)}" oninput="q=this.value;vStockRows()"></div>
+ <button class="b" onclick="openItem()">Add fabric</button><button class="b g" onclick="csv()">Export CSV</button><button class="b y" onclick="qrOpen()">Master QR</button><button class="b g" onclick="printReport()">Print report</button></div></div>
+ <div class="card tw"><table><thead><tr><th>Fabric</th><th>Color</th><th>Width</th><th>Location</th><th>Received</th><th>Used (cut)</th><th>Balance</th><th>Barcode</th><th></th></tr></thead><tbody id="rows"></tbody></table></div>`;vStockRows()}
+function vStockRows(){
+ const L=D.items.filter(i=>(i.name+i.sku+i.color+i.type+i.loc).toLowerCase().includes(q.toLowerCase()));
+ $("rows").innerHTML=L.length?L.map(i=>`<tr><td><b>${esc(i.name)}</b><br><small style="color:var(--mu)">${esc(i.type)}</small></td><td><span class="sw" style="background:${esc(i.hex||"#ccc")}"></span>${esc(i.color)}</td><td>${esc(i.width)}</td><td>${esc(i.loc)}</td>
+ <td>${money(i.inn)} ${esc(i.unit)}</td><td>${i.used?money(i.used)+" "+esc(i.unit)+(i.last?`<br><small style="color:var(--mu)">last: ${esc(i.last.by||"")} ${new Date(i.last.ts).toLocaleString()}</small>`:""):"-"}</td><td class="${isLow(i)?"low":""}"><b>${money(i.qty)} ${esc(i.unit)}</b>${isLow(i)?'<span class="tag">Low</span>':""}</td><td><div style="width:130px;background:#fff;padding:3px;border-radius:3px">${bc(i.sku,34)}</div><small>${esc(i.sku)}</small></td>
+ <td style="white-space:nowrap"><button class="b y" onclick="printOne('${i.id}')">Print label</button> <button class="b g" onclick="openItem('${i.id}')">Edit</button> <button class="b g" onclick="del('${i.id}')">Delete</button></td></tr>`).join(""):`<tr><td colspan="9" style="color:var(--mu);padding:22px">No fabric found. Tap Add fabric to create the first item.</td></tr>`}
+ 
+function openItem(id){editId=id||null;const i=id?D.items.find(x=>x.id==id):{sku:"FB"+String(D.n).padStart(6,"0"),unit:"m",qty:0,min:10,price:0,hex:"#1f3a6e"};
+ $("dt").textContent=id?"Edit fabric":"Add fabric";
+ const f=(k,l,t="text",ex="")=>`<div><label>${l}</label><input id="f_${k}" type="${t}" value="${esc(i[k]??"")}" ${ex}></div>`;
+ $("ff").innerHTML=f("name","Fabric name")+f("type","Type (cotton, silk...)")+f("color","Color name")+f("hex","Color swatch","color")+f("width","Width (e.g. 58 in)")+
+ `<div><label>Unit</label><select id="f_unit">${["m","yd","roll","kg"].map(u=>`<option ${i.unit==u?"selected":""}>${u}</option>`).join("")}</select></div>`+
+ f("qty","Quantity","number",'step="any" min="0"')+f("min","Low stock alert at","number",'step="any" min="0"')+f("price","Price per unit","number",'step="any" min="0"')+f("loc","Rack / location")+f("sku","Barcode (auto)");
+ dlg.showModal()}
+function saveItem(){const g=k=>$("f_"+k).value.trim();if(!g("name")){alert("Enter fabric name");return}
+ const sku=g("sku").replace(/[^\x20-\x7e]/g,"")||"FB"+String(D.n).padStart(6,"0");
+ if(D.items.some(x=>x.sku==sku&&x.id!=editId)){alert("This barcode is already used by another fabric");return}
+ const o={name:g("name"),type:g("type"),color:g("color"),hex:g("hex"),width:g("width"),unit:g("unit"),qty:+g("qty")||0,min:+g("min")||0,price:+g("price")||0,loc:g("loc"),sku};
+ persistItem(o);
+ save();dlg.close();render()}
+function del(id){const i=D.items.find(x=>x.id==id);if(confirm("Delete "+i.name+"?")){db.collection('items').doc(id).delete().catch(()=>alert('Only the owner can delete fabrics.'))}}
+async function persistItem(o){const {qty,...f}=o;let id=editId;const old=id?D.items.find(x=>x.id==id):null;
+ try{if(!id){id='i'+Date.now().toString(36);await db.collection('items').doc(id).set(f);if(qty>0)await addLog(Object.assign({id},f),qty,'Opening stock','open')}
+ else{await db.collection('items').doc(id).set(f);const diff=+(qty-old.qty).toFixed(3);if(diff)await addLog(Object.assign({id},f),diff,'Manual adjustment','adj')}}
+ catch(e){alert('Could not save. Only the owner can add or edit fabrics.')}}
+async function addLog(i,d,nt,k){const id='m'+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+ const v={iid:i.id,sku:i.sku,nm:i.name+(i.color?' '+i.color:''),d,u:i.unit,note:nt||'',k:k||(d>0?'in':'out'),ts:Date.now(),by:D.master||''};
+ try{await db.collection('moves').doc(id).set(v)}catch(e){alert('Could not save to the shared database. You need Editor access to this page.');throw e}
+ await new Promise(r=>setTimeout(r,150))}
+ 
+function vScan(){
+ $("app").innerHTML=`<div class="card"><label>Scan barcode (USB / Bluetooth scanner types here and presses Enter) or type it</label>
+ <div class="row"><div class="grow"><input id="sc" class="big" placeholder="Scan now..." autocomplete="off" onkeydown="if(event.key=='Enter')find(this.value)"></div><button class="b y" onclick="cam()">Use camera</button></div>
+ <video id="vd" playsinline muted></video><button id="cb" class="b r" style="display:none;margin-top:8px" onclick="stopCam()">Stop camera</button><div id="res"></div></div>`;if(scanned)find(scanned,1)}
+function find(code,quiet){code=code.trim();const i=D.items.find(x=>x.sku.toLowerCase()==code.toLowerCase());scanned=i?i.sku:null;
+ if(!i){$("res").innerHTML=`<div class="msg" style="border-color:var(--bad)">No fabric with barcode <b>${esc(code)}</b>. Add it in the Stock tab first.</div>`;$("sc").select();return}
+ $("res").innerHTML=`<div class="msg"><b style="font-size:18px">${esc(i.name)}</b> - ${esc(i.color)}, ${esc(i.width)}<br>Location: ${esc(i.loc)||"-"}<br>In stock: <b class="${isLow(i)?"low":""}">${money(i.qty)} ${esc(i.unit)}</b></div>
+ <div class="row" style="margin-top:10px"><div class="grow"><label>Quantity (${esc(i.unit)})</label><input id="mq" type="number" step="any" min="0" value="1" class="big" onkeydown="if(event.key=='Enter')mv('${i.id}',1)"></div>
+ <div class="grow"><label>Note (party / order no.)</label><input id="mn"></div></div>
+ <div class="row" style="margin-top:10px"><button class="b big" style="background:var(--ok);border-color:var(--ok);color:#fff" onclick="mv('${i.id}',1)">Stock IN +</button><button class="b big r" onclick="mv('${i.id}',-1)">Stock OUT -</button></div>`;
+ if(!quiet)$("mq").select()}
+async function mv(id,s){const i=D.items.find(x=>x.id==id),n=+$("mq").value;if(!(n>0)){alert("Enter a quantity above 0");return}
+ if(s<0&&n>i.qty&&!confirm("Only "+i.qty+" "+i.unit+" in stock. Go negative?"))return;
+ try{await addLog(i,s*n,$("mn").value,s>0?"in":"out")}catch(e){return}find(i.sku,1);$("res").insertAdjacentHTML("afterbegin",`<div class="msg" style="border-color:var(--ok)">Saved: ${s>0?"+":"-"}${n} ${esc(i.unit)}</div>`);$("sc").value="";$("sc").focus()}
+let zr=null,ms=null,tm=null;
+function stopCam(){try{zr&&zr.reset()}catch(e){}zr=null;clearInterval(tm);ms&&ms.getTracks().forEach(k=>k.stop());ms=null;const v=$("vd");if(v)v.style.display="none";if($("cb"))$("cb").style.display="none"}
+function got(c){stopCam();if(navigator.vibrate)navigator.vibrate(80);$("sc").value=c;find(c)}
+async function cam(){
+ if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){alert("Camera is not available here. Open the app link directly in Chrome or Safari.");return}
+ stopCam();const v=$("vd");v.style.display="block";$("cb").style.display="inline-block";
+ try{
+  if("BarcodeDetector" in window){ms=await navigator.mediaDevices.getUserMedia({video:{facingMode:"environment"}});v.srcObject=ms;await v.play();const d=new BarcodeDetector();tm=setInterval(async()=>{try{const r=await d.detect(v);if(r.length)got(r[0].rawValue)}catch(e){}},300)}
+  else if(window.ZXing){zr=new ZXing.BrowserMultiFormatReader();await zr.decodeFromConstraints({video:{facingMode:"environment"}},v,(r)=>{if(r)got(r.getText())})}
+  else{stopCam();alert("Scanner library could not load. Check your internet and reload.")}
+ }catch(e){stopCam();alert("Camera could not start. Allow camera permission. If it still fails, open this app link directly in Chrome or Safari.")}}
+async function camOld(){if(!("BarcodeDetector" in window)){return}
+ try{const s=await navigator.mediaDevices.getUserMedia({video:{facingMode:"environment"}}),v=$("vd");v.srcObject=s;v.style.display="block";await v.play();const d=new BarcodeDetector();
+ const t=setInterval(async()=>{try{const r=await d.detect(v);if(r.length){clearInterval(t);s.getTracks().forEach(k=>k.stop());v.style.display="none";$("sc").value=r[0].rawValue;find(r[0].rawValue)}}catch(e){}},400)}catch(e){alert("Camera could not start. Allow camera permission and try again.")}}
+ 
+function vLabels(){
+ $("app").innerHTML=`<div class="card"><div class="row"><div class="grow"><label>Label size</label><select id="ls" onchange="cs=this.value;render()"><option value="a" ${cs=="a"?"selected":""}>Thermal 50 x 30 mm</option><option value="b" ${cs=="b"?"selected":""}>Thermal 70 x 40 mm</option><option value="c" ${cs=="c"?"selected":""}>A4 sheet (60 x 35 mm labels)</option></select></div>
+ <button class="b g" onclick="D.items.forEach(i=>sel[i.id]=sel[i.id]||1);render()">Select all</button><button class="b g" onclick="sel={};render()">Clear</button><button class="b y" onclick="printLabels()">Print labels</button><button class="b" onclick="pdfLabels(1)">Download PDF</button></div></div>
+ ${prev()}<div class="card tw"><table><thead><tr><th>Fabric</th><th>Barcode</th><th style="width:110px">Copies</th></tr></thead><tbody>${D.items.map(i=>`<tr><td>${esc(i.name)} - ${esc(i.color)}</td><td><div style="width:150px;background:#fff;padding:3px">${bc(i.sku,34)}</div><small>${esc(i.sku)}</small></td><td><input type="number" min="0" value="${sel[i.id]||0}" onchange="sel['${i.id}']=+this.value;$('pvx').innerHTML=pvIn()"></td></tr>`).join("")||`<tr><td colspan="3" style="padding:20px;color:var(--mu)">Add fabric first to print labels.</td></tr>`}</tbody></table></div>`}
+const SZ={a:[50,30,28],b:[70,40,40],c:[60,35,34]};
+function pvIn(){const [w,h,bh]=SZ[cs];let L=D.items.filter(i=>sel[i.id]>0);if(!L.length)L=D.items.slice(0,1);return L.length?`<div class="lbs">${L.slice(0,12).map(i=>lbl(i,w,h,bh)).join("")}</div>`:`<p style="color:var(--mu)">Add a fabric to see its label.</p>`}
+function prev(){return `<div class="card"><label>Label preview (actual size, ${SZ[cs][0]} x ${SZ[cs][1]} mm)</label><div id="pvx">${pvIn()}</div></div>`}
+function lbl(i,w,h,bh){return `<div class="lbp" style="width:${w}mm;height:${h}mm"><b>${esc(i.name)}</b><span>${esc(i.color)} ${esc(i.width)} ${i.loc?"| "+esc(i.loc):""}</span><div style="display:flex;gap:2mm;align-items:center;margin-top:1mm;height:${h-12}mm">${(()=>{const u=qrUrl(i.sku),q=u?qrSvg(u):"";return q?`<div style="width:${h-12}mm;flex:none">${q}</div>`:""})()}<div style="flex:1;min-width:0">${bc(i.sku,Math.round((h-17)*3.7))}<div class="s">${esc(i.sku)}</div></div></div></div>`}
+let ps={};function printLabels(){ps=Object.assign({},sel);const [w,h,bh]=SZ[cs];let o="";D.items.forEach(i=>{for(let k=0;k<(sel[i.id]||0);k++)o+=lbl(i,w,h,bh)});if(!o){alert("Set copies for at least one fabric");return}
+ $("pa").innerHTML=`<div class="${cs=="c"?"a4":"th"}">${o}</div>`;$("pg").textContent=cs=="c"?"@page{size:A4;margin:8mm}":`@page{size:${w}mm ${h}mm;margin:0}`;setTimeout(outPrint,100)}
+function printReport(){ps=null;$("pa").innerHTML=`<h2 style="font:bold 16px Arial;color:#000">Fabric stock report - ${new Date().toLocaleDateString()}</h2><table><tr><th>Fabric</th><th>Color</th><th>Width</th><th>Location</th><th>Qty</th><th>Barcode</th></tr>${D.items.map(i=>`<tr><td>${esc(i.name)}</td><td>${esc(i.color)}</td><td>${esc(i.width)}</td><td>${esc(i.loc)}</td><td>${money(i.qty)} ${esc(i.unit)}</td><td>${esc(i.sku)}</td></tr>`).join("")}</table>`;$("pg").textContent="@page{size:A4;margin:10mm}";setTimeout(outPrint,100)}
+ 
+const MM=/^#(master|cut-)/.test(location.hash);if(MM)document.documentElement.classList.add('mm');
+const APPURL=location.href.split('#')[0];let pend=(/^#cut-(.+)$/.exec(location.hash)||[])[1]||null;
+addEventListener('hashchange',()=>{const m=/^#cut-(.+)$/.exec(location.hash);if(m){pend=m[1];if(ready)refresh()}});
+function qrUrl(s){return /^[A-Za-z0-9-]+$/.test(String(s))?APPURL+'#cut-'+s:''}
+function qrSvg(u){if(typeof qrcode==='undefined')return '';const Q=qrcode(0,'M');Q.addData(u);Q.make();return Q.createSvgTag(4,1).replace('<svg','<svg style="width:100%;height:auto;display:block"')}
+function vMaster(){document.title='Fabric cutting';$("app").innerHTML=`<div class="card" style="text-align:center;padding:28px 14px"><h2 style="margin:0 0 6px">Fabric cutting</h2><p style="color:var(--mu);margin:0 0 18px">Scan the barcode on the fabric roll, enter the length used and press OK.</p><button class="b y big" style="width:100%;padding:22px;font-size:22px" onclick="cOpen()">Scan fabric</button></div>`}
+function bcMods(t){let v=[104],s=104;for(let i=0;i<t.length;i++){const c=t.charCodeAt(i)-32;v.push(c);s+=c*(i+1)}v.push(s%103,106);let x=10,r=[];v.forEach(c=>{const p=P[c];for(let i=0;i<p.length;i++){const w=+p[i];if(i%2==0)r.push([x,w]);x+=w}});return {r,t:x+10}}
+async function pdfLabels(fresh){const d=DL;if(!d||!window.jspdf){alert('PDF is not available here. Check your internet and reload.');return}
+ const {jsPDF}=window.jspdf;let doc;const rep=!fresh&&ps===null;
+ try{
+  if(rep){doc=new jsPDF({unit:'mm',format:'a4'});doc.setFontSize(13);doc.text('Fabric stock report - '+new Date().toLocaleDateString(),10,12);doc.setFontSize(8);let y=20;const X=[10,70,105,130,160,185];
+   [['Fabric','Color','Width','Location','Balance','Barcode']].concat(D.items.map(i=>[i.name,i.color,i.width,i.loc,money(i.qty)+' '+i.unit,i.sku])).forEach((r,k)=>{if(y>285){doc.addPage();y=12}doc.setFont('helvetica',k?'normal':'bold');r.forEach((c,j)=>doc.text(String(c||'').slice(0,j?(j==5?14:20):34),X[j],y));y+=6})}
+  else{const S=fresh?sel:ps;const [w,h]=SZ[cs];const L=[];D.items.forEach(i=>{for(let k=0;k<(S[i.id]||0);k++)L.push(i)});if(!L.length){alert('Set copies for at least one fabric');return}
+   const A=cs==='c';doc=new jsPDF({unit:'mm',format:A?'a4':[w,h],orientation:A?'p':(w>h?'l':'p')});
+   const draw=(i,ox,oy)=>{doc.setTextColor(0);doc.setFont('helvetica','bold');doc.setFontSize(8);doc.text(String(i.name||'').slice(0,28),ox+2,oy+4);doc.setFont('helvetica','normal');doc.setFontSize(6.5);doc.text(((i.color||'')+' '+(i.width||'')+(i.loc?' | '+i.loc:'')).slice(0,40),ox+2,oy+7.2);
+    let bx=ox+2,bw=w-4;const qu=qrUrl(i.sku);if(qu&&typeof qrcode!=='undefined'){const Q=qrcode(0,'M');Q.addData(qu);Q.make();const n=Q.getModuleCount(),qs=h-13,cu=qs/(n+2);doc.setFillColor(0);for(let r=0;r<n;r++)for(let k=0;k<n;k++)if(Q.isDark(r,k))doc.rect(ox+2+(k+1)*cu,oy+9+(r+1)*cu,cu+0.02,cu+0.02,'F');bx=ox+2+qs+2;bw=w-4-qs-2}
+    const b=bcMods(i.sku),sc=bw/b.t;doc.setFillColor(0);b.r.forEach(m=>doc.rect(bx+m[0]*sc,oy+9,m[1]*sc,h-15,'F'));doc.setFont('courier','normal');doc.setFontSize(7);doc.text(String(i.sku),bx+bw/2,oy+h-2,{align:'center'})};
+   if(A){const cols=Math.max(1,Math.floor(194/(w+3))),per=cols*Math.max(1,Math.floor(281/(h+3)));L.forEach((i,k)=>{if(k&&k%per===0)doc.addPage();const n=k%per,ox=8+(n%cols)*(w+3),oy=8+Math.floor(n/cols)*(h+3);doc.setDrawColor(190);doc.rect(ox,oy,w,h);draw(i,ox,oy)})}
+   else L.forEach((i,k)=>{if(k)doc.addPage();draw(i,0,0)})}
+  await d.save({filename:rep?'stock-report.pdf':'labels.pdf',data:doc.output('blob')});bn('')
+ }catch(e){if(!e||e.code!=='declined')alert('Could not create the PDF.')}}
+let qrO=null;
+function qrMake(){const u=$('qu').value.trim();if(!u||typeof qrcode==='undefined'){$('qb').textContent='QR library could not load. Check your internet.';return}const Q=qrcode(0,'M');Q.addData(u);Q.make();qrO=Q;$('qb').innerHTML=Q.createSvgTag(6,4);const s=$('qb').firstChild;s.style.width='260px';s.style.height='260px';s.style.display='block'}
+function qrOpen(){if(!$('qu').value)$('qu').value=APPURL+'#master';$('qd').showModal();qrMake()}
+async function qrPng(){const d=DL;if(!d||!qrO)return;const n=qrO.getModuleCount(),s=10,m=4,z=(n+2*m)*s,c=document.createElement('canvas');c.width=c.height=z;const x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,z,z);x.fillStyle='#000';for(let r=0;r<n;r++)for(let k=0;k<n;k++)if(qrO.isDark(r,k))x.fillRect((k+m)*s,(r+m)*s,s,s);
+ c.toBlob(async b=>{try{await d.save({filename:'master-qr.png',data:b})}catch(e){}})}
+async function qrPdf(){const d=DL;if(!d||!window.jspdf||!qrO)return;const doc=new window.jspdf.jsPDF({unit:'mm',format:'a4'});const n=qrO.getModuleCount(),m=4,sz=120,u=sz/(n+2*m),ox=45,oy=50;
+ doc.setFontSize(22);doc.setFont('helvetica','bold');doc.text('Scan to record fabric cutting',105,30,{align:'center'});doc.setFillColor(0);
+ for(let r=0;r<n;r++)for(let k=0;k<n;k++)if(qrO.isDark(r,k))doc.rect(ox+(k+m)*u,oy+(r+m)*u,u+0.02,u+0.02,'F');
+ doc.setFontSize(12);doc.setFont('helvetica','normal');doc.text('Open the phone camera, point it at this code and tap the link.',105,185,{align:'center'});
+ try{await d.save({filename:'master-qr.pdf',data:doc.output('blob')})}catch(e){}}
+function pdoc(){const css='*{box-sizing:border-box}body{margin:0;background:#fff;color:#000;font-family:Arial,sans-serif}.lbp{background:#fff;color:#000;border:1px dashed #999;padding:5px;font:11px/1.2 Arial,sans-serif;overflow:hidden}.lbp b{display:block;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.lbp .s{text-align:center;letter-spacing:1.5px;font:11px monospace}.th .lbp{border:0;page-break-after:always}.a4{display:flex;flex-wrap:wrap;gap:3mm}.a4 .lbp{border:1px dashed #bbb}table{border-collapse:collapse;width:100%;font:11px Arial}th,td{border:1px solid #888;padding:3px 5px;text-align:left}@media screen{.th .lbp{border:1px dashed #999;margin:6px}}';
+ return '<!DOCTYPE html><html><head><meta charset="utf-8"><title>Print</title><style>'+$('pg').textContent+css+'</style></head><body>'+$('pa').innerHTML+'<script>onload=function(){setTimeout(function(){print()},500)}<\/script></body></html>'}
+function outPrint(){let w=null;try{w=window.open(URL.createObjectURL(new Blob([pdoc()],{type:'text/html'})),'_blank')}catch(e){}
+ if(w)return;try{window.print()}catch(e){}
+ bn('If no print window opened, your browser blocks printing inside this page. <button class="b y" onclick="pdfLabels()">Download PDF</button> <button class="b" onclick="dlPrint()">Download print file</button> <button class="b g" onclick="bn(\'\')">Close</button><br><small>Open the downloaded file in Chrome and the print window opens by itself.</small>')}
+async function dlPrint(){const d=DL;if(!d){alert('Download is not available here.');return}
+ const css='*{box-sizing:border-box}body{margin:0;background:#fff;color:#000;font-family:Arial,sans-serif}.lbp{background:#fff;color:#000;border:1px dashed #999;padding:5px;font:11px/1.2 Arial,sans-serif;overflow:hidden}.lbp b{display:block;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.lbp .s{text-align:center;letter-spacing:1.5px;font:11px monospace}.th .lbp{border:0;page-break-after:always}.a4{display:flex;flex-wrap:wrap;gap:3mm}.a4 .lbp{border:1px dashed #bbb}table{border-collapse:collapse;width:100%;font:11px Arial}th,td{border:1px solid #888;padding:3px 5px;text-align:left}@media screen{.th .lbp{border:1px dashed #999;margin:6px}}';
+ const h='<!DOCTYPE html><html><head><meta charset="utf-8"><title>Print</title><style>'+$('pg').textContent+css+'</style></head><body>'+$('pa').innerHTML+'<script>onload=function(){setTimeout(function(){print()},400)}<\/script></body></html>';
+ try{await d.save({filename:'print-labels.html',data:h});bn('')}catch(e){if(!e||e.code!=='declined')alert('Could not save the print file.')}}
+function printOne(id){const n=parseInt(prompt("How many labels to print?","1"));if(!(n>0))return;const o=sel;sel={};sel[id]=n;printLabels();sel=o}
+let cst=null,crd=null,cti=null;
+function cStop(){try{crd&&crd.reset()}catch(e){}crd=null;clearInterval(cti);cst&&cst.getTracks().forEach(k=>k.stop());cst=null;const v=$("cv");if(v)v.style.display="none"}
+function cOpen(){$("cr").innerHTML="";$("cc").value="";$("cd").showModal();cStart()}
+function cClose(){cStop();$("cd").close()}
+$("cd").addEventListener("close",cStop);
+async function cStart(){const v=$("cv");
+ if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){$("cr").innerHTML='<div class="msg" style="border-color:var(--bad)">Live camera is blocked on this phone. Tap <b>Take photo</b>, photograph the barcode, and it will be read from the photo.</div>';return}
+ cStop();v.style.display="block";
+ try{
+  if("BarcodeDetector" in window){cst=await navigator.mediaDevices.getUserMedia({video:{facingMode:"environment"}});v.srcObject=cst;await v.play();const d=new BarcodeDetector();cti=setInterval(async()=>{try{const r=await d.detect(v);if(r.length)cGot(r[0].rawValue)}catch(e){}},300)}
+  else if(window.ZXing){crd=new ZXing.BrowserMultiFormatReader();await crd.decodeFromConstraints({video:{facingMode:"environment"}},v,r=>{if(r)cGot(r.getText())})}
+  else{cStop();alert("Scanner library could not load. Check your internet and reload.")}
+ }catch(e){cStop();const pp=document.permissionsPolicy||document.featurePolicy;const why=(pp&&pp.allowsFeature&&!pp.allowsFeature('camera'))?'This page is opened inside claude.ai without camera permission, so the live camera cannot start here.':(e&&e.name==='NotAllowedError'?'Camera permission was denied. Tap the lock icon in the browser address bar, allow Camera, then reload.':'Camera error: '+((e&&e.name)||'unknown'));$("cr").innerHTML=`<div class="msg" style="border-color:var(--bad)">${why}<br>Use <b>Take photo</b> instead, or type the barcode number.</div>`}}
+async function cPhoto(inp){const f=inp.files[0];inp.value='';if(!f)return;const r=$('cr'),bad='<div class="msg" style="border-color:var(--bad)">Barcode not found in the photo. Take a sharp, closer photo with the whole barcode in view, or type the number.</div>';
+ r.innerHTML='<div class="msg">Reading barcode...</div>';
+ try{let code=null;
+  if('BarcodeDetector' in window){try{const bm=await createImageBitmap(f);const d=await new BarcodeDetector().detect(bm);if(d.length)code=d[0].rawValue}catch(e){}}
+  if(!code&&window.ZXing){const u=URL.createObjectURL(f);try{const res=await new ZXing.BrowserMultiFormatReader().decodeFromImageUrl(u);code=res.getText()}catch(e){}finally{URL.revokeObjectURL(u)}}
+  if(code){$('cc').value=code;cFind(code)}else r.innerHTML=bad
+ }catch(e){r.innerHTML=bad}}
+function cGot(c){if(navigator.vibrate)navigator.vibrate(80);cFind(c)}
+function cFind(code){code=(code||"").trim();const r=$("cr"),i=D.items.find(x=>x.sku.toLowerCase()==code.toLowerCase());
+ if(!ready){r.innerHTML='<div class="msg">Loading stock, please wait a moment...</div>';return}
+ if(!i){r.innerHTML=`<div class="msg" style="border-color:var(--bad)">No fabric with barcode <b>${esc(code)}</b>.</div>`;return}
+ cStop();$("cc").value=i.sku;
+ r.innerHTML=`<div class="msg"><b style="font-size:18px">${esc(i.name)}</b><br><span class="sw" style="background:${esc(i.hex||"#ccc")}"></span>${esc(i.color)}, ${esc(i.width)}<br>Available: <b class="${isLow(i)?"low":""}">${money(i.qty)} ${esc(i.unit)}</b></div>
+ <div class="fg" style="margin-top:10px"><div><label>Fabric used (${esc(i.unit)})</label><input id="cq" class="big" type="number" step="any" min="0" inputmode="decimal" onkeydown="if(event.key=='Enter')cSave('${i.id}')"></div><div><label>Cutting master name</label><input id="cmn" value="${esc(D.master||"")}"></div></div>
+ <div style="margin-top:10px"><label>Note (order / garment)</label><input id="cn"></div>
+ <div class="row" style="margin-top:12px"><button type="button" class="b big" onclick="cSave('${i.id}')">OK - Save</button></div>`;
+ setTimeout(()=>$("cq").focus(),50)}
+async function cSave(id){const i=D.items.find(x=>x.id==id),n=+$("cq").value,m=$("cmn").value.trim(),nt=$("cn").value.trim();
+ if(!(n>0)){alert("Enter the fabric used");return}
+ if(!m){alert("Enter cutting master name");return}
+ if(n>i.qty&&!confirm("Only "+money(i.qty)+" "+i.unit+" in stock. Save anyway?"))return;
+ i.qty=+(i.qty-n).toFixed(3);D.master=m;save();try{await addLog(i,-n,"Cut by "+m+(nt?" - "+nt:""),"cut")}catch(e){i.qty=+(i.qty+n).toFixed(3);return}
+ $("cr").innerHTML=`<div class="msg" style="border-color:var(--ok)"><b>Saved.</b> ${money(n)} ${esc(i.unit)} of ${esc(i.name)} deducted.<br>Remaining: <b>${money(i.qty)} ${esc(i.unit)}</b>${isLow(i)?'<span class="tag">Low</span>':""}</div><div class="row" style="margin-top:10px"><button type="button" class="b y big" onclick="$('cr').innerHTML='';$('cc').value='';cStart()">Scan next fabric</button></div>`;
+ if(tab=="stock"||tab=="log")render()}
+function vLog(){$("app").innerHTML=`<div class="card tw"><table><thead><tr><th>Time</th><th>Fabric</th><th>Change</th><th>Note</th></tr></thead><tbody>${D.log.map(l=>`<tr><td>${esc(l.t)}</td><td>${esc(l.name)}<br><small>${esc(l.sku)}</small></td><td class="${l.d>=0?"pos":"neg"}">${l.d>=0?"+":""}${money(l.d)} ${esc(l.u)}</td><td>${esc(l.note)}</td></tr>`).join("")||`<tr><td colspan="4" style="padding:20px;color:var(--mu)">No movements yet. Stock in / out will show here.</td></tr>`}</tbody></table></div>`}
+function csv(){const r=[["Name","Type","Color","Width","Unit","Qty","MinQty","Price","Location","Barcode"],...D.items.map(i=>[i.name,i.type,i.color,i.width,i.unit,i.qty,i.min,i.price,i.loc,i.sku])];
+ const t=r.map(a=>a.map(c=>'"'+String(c??"").replace(/"/g,'""')+'"').join(",")).join("\n");const a=document.createElement("a");a.href="data:text/csv;charset=utf-8,"+encodeURIComponent(t);a.download="fabric-stock.csv";a.click()}
+function outPrint(){window.print()}
+render();
+</script></body></html>
+ 
